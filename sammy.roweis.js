@@ -3,6 +3,7 @@
 Roweis, lightweight controllers and views for the Sammy JS framework.
 
 http://github.com/raganwald/Roweis
+http://github.com/quirkey/sammy
 
 The MIT License
 
