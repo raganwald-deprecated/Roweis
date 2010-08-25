@@ -19,9 +19,9 @@ Roweis is for you if:
 2. You're familiar with MVC and have used it in at least one other context, e.g. Ruby on Rails.
 3. Your client application is backed by a server that speaks JSON.
 
-**how**
+**how sammy\_js does it**
 
-To write a Roweis [single plage application][spa], you'll need jQuery, Sammy, Roweis, and one of Sammy's template plug ins ([Haml][haml] recommended). Ini its simplest form, your single page will expose one page element that Roweis and Sammy will manipulate, something like this:
+To write a Roweis [single page application][spa], you'll need jQuery, Sammy, Roweis, and one of Sammy's template plug ins ([Haml][haml] recommended). Ini its simplest form, your single page will expose one page element that Roweis and Sammy will manipulate, something like this:
 
 !!!5
 
@@ -68,87 +68,97 @@ You then write an `application.js` file for Sammy:
 	
     })(jQuery);
     
-Now you'r eready to write controllers and views.
+Now you're ready to write controllers and views.
     
-**local controllers**
+**mvc**
+
+In the Model-View-Controller ("MVC") architectural pattern, the concerns of domain logic, presentation of data, and input are separated into "Models," "Views," and "Controllers." This separation facilitates independent testing and re-use. MVC is not the be-all and end-all of architecture, but it is appropriate for some applications.
+
+Roweis is silent on the subject of models. Roweis assumes the existence of a back-end web server or web service that manages the models, while your application provides views and controllers. The purpose of Roweis is to give you a place to put your views and controllers, and to provide a smooth transition from intermingling view and controller code in the same function up to placing views and controllers in their own independent Javascript files.
+
+**controllers and views**
     
-In Sammy, you write Sinatra-like handlers for the routes your app supports, e.g.
+In Sammy and Roweis, controllers are chunks of code that handle HTTP requests, and views are chunks of code that manipulate the DOM of your single page application. It is possible to intermingle controller and view code. In Sammy and in Roweis, you can write a single function that handles a request for a route and directly manipulates the DOM:
 
     this.get('#/welcome', function() {
       $('.main').text('Welcome!');
     });
-    
-If you want to split things into a controller and a view, you write a Haml tenmplate, e.g. `welcome.haml`:
+
+If you want to split things into a controller and a view, you write a Haml template, e.g. `welcome.haml`:
 
     // welcome.haml
     Welcome to my Haml view!
 
-And your controller tells Sammy to render the view with whatever parameters are passed in:
+And your controller renders the view:
 
     this.get('#/welcome', function (context) {
       this.render('welcome.haml', context.params.toHash());
     });
 
-In Roweis, you could write the above as:
+This trades some additional complexity for some separation of concerns. The controller is written in Javascript and the view is written in Haml. You also have some reusability: Multiple controllers can share the same view. And with Roweis, you can write the above code in Sammy's application scope and it works just fine. You can also define a controller throw a global `Sammy.Roweis` object:
 
     Sammy.Roweis.controllers.welcome = function () {
       this.render('welcome.haml', context.params.toHash());
     };
+    
+This is significant because it is now very easy to move a controller definition into its own Javascript file. When definitions are very small, moving them around makes coding a chore. But as they get more complex, you might want to group them in various ways. Roweis makes that easy, because you can define controller objects from any Javascript file.
 
-This defines a controller named "welcome," and Roweis assumes by default that you want its route to be `#/welcome`. Convention over configuration. But Roweis can assume even more on your behalf, behold:
+Notice that Roweis also does a little "Convention over Configuration:" if a controller is called `welcome`, the default route for it is `#/welcome`. But Roweis can go further. Notice that the view is called `welcome.haml`? Behold:
 
     Sammy.Roweis.controllers.def({
       name: 'welcome'
     });
     
-By default, Roweis creates a controller that simply invokes the Haml view. It also has a default route of `#/welcome`. You can define some more options. For example, you can use a different route:
+By default, Roweis creates a controller that simply invokes the Haml view of the same name. It also has a default route of `#/welcome`. You can define some more options. For example, you can use a different route:
 
     Sammy.Roweis.controllers.def({
       name: 'welcome',
       path: '#/'
     });
+    
+**private and public views**
+    
+One thing that is very important to note: When a controller has the same name as a view, the view is *Private*. The only controller that can use it is the controller with the same name. When a view does not share its name with a controller, the view is *Public*, and any controller can use it.
 
-Or you can tell it to use a different view:
-
-    Sammy.Roweis.controllers.def({
-      name: 'welcome',
-      path: '#/',
-      view: 'index.haml'
-    });
-
-Of course, you can still write your own controller instead of accepting the default. Simply associate a Sammy-style function with the appropriate HTTP verb:
-
-    Sammy.Roweis.controllers.def({
-  		name: 'easteregg',
-  		get: function (context) {
-  			alert(context.params.say || 'Hello, Sammy Roweis');
-  			Sammy.Roweis.controllers.home.redirect(context);
-  		}
-  	});
-  	
-And finally, you can define more than one controller at a time:
+We just saw how you associate a controller with a private view in Roweis: You give it the same name and Roweis takes care of the rest. Let's look at public views. Let's assume that we run a [Skateboard and BMX Shop][core]. We have two different routes, `#/skateboard`, and `#bmx`. If they each had their own private view, we would write a `skateboard.haml` view and a `bmx.haml` view. Then we'd write our controllers:
 
     Sammy.Roweis.controllers.def(
-      'login',
-      {
-    		'name': 'home',
-    		'path': '#/'
-    	},
-    	{
-    		'name': 'easteregg',
-    		'get': function (context) {
-    			alert(context.params.say || 'Hello, Sammy+Roweis');
-    			Sammy.Roweis.controllers.home.redirect(context);
-    		}
-    	},
-    	{
-    		'get': 'widgets'
-    	},
-    	{
-    		'get': 'logoff',
-    		'view': 'home'
-    	}
+      { name: 'skateboard' },
+      { name: 'bmx' }
     );
+    
+If we want both controllers to share a public `product.haml` view, we simply say so:
+
+    Sammy.Roweis.controllers.def(
+      { name: 'skateboard', view: 'product' },
+      { name: 'bmx',        view: 'product' }
+    );
+    
+Of course, many times we don't need to share a view, so Sammy is set up to make you do as little work as possible. 
+
+**redirection**
+
+As mentioned, you cannot have a controller use another controller's private view. Consider:
+
+    Sammy.Roweis.controllers.def(
+      { name: 'skateboard' },
+      { name: 'bmx', view: 'skateboard' }
+    );
+
+This does **not** cause the `bmx` controller to use `skateboard.haml` as its view. Instead, the `bmx` controller *redirects* to the skateboard controller's route. This is most common when you are posting the results of a form, so much so that it has its own name, [Post/Redirect/Get][prg]. In the example above, a user invoking `#/bmx` will have their browser redirect to `#/skateboard`.
+
+Note that Roweis does some route resolution for you. If you write:
+
+    Sammy.Roweis.controllers.def(
+      { 
+        name: 'skateboard', 
+        path: '#/boards,
+        view: 'board'
+      },
+      { name: 'bmx', view: 'skateboard' }
+    );
+
+Then a user invoking `#/bmx` will have their browser redirect to `#/boards`. The skateboard controller will handle that and use `board.haml` as the view.
   	
 **server controllers**
 
@@ -177,3 +187,5 @@ Stay tuned for more writing. *Roweis was conceived on August 19, 2010*.
 [cloud]: http://getcloudkit.com/
 [spa]: http://en.wikipedia.org/wiki/Single_page_application "Single Page Application"
 [haml]: http://haml-lang.com/ "#haml"
+[core]: http://www.ridecore.ca "CORE BMX and Boards"
+[prg]: http://en.wikipedia.org/wiki/Post/Redirect/Get
