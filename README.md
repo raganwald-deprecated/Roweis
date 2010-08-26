@@ -21,10 +21,10 @@ Roweis is for you if:
 
 **how sammy\_js does it**
 
-To write a Roweis [single page application][spa], you'll need jQuery, Sammy, Roweis, and one of Sammy's template plug ins ([Haml][haml] recommended). Ini its simplest form, your single page will expose one page element that Roweis and Sammy will manipulate, something like this:
+To write a Roweis [single page application][spa], you'll need jQuery, Sammy, Roweis, and one of Sammy's template plug ins ([Haml][haml] recommended). In its simplest form, your single page will expose one page element that Roweis and Sammy will manipulate, something like this:
 
-!!!5
-
+    !!!5
+    
     %html
       %head
         %script{:src=>"jquery.js", :type=>"text/javascript", :charset=>"utf-8"}
@@ -113,7 +113,7 @@ By default, Roweis creates a controller that simply invokes the Haml view of the
 
     Sammy.Roweis.controllers.def({
       name: 'welcome',
-      path: '#/'
+      route: '#/'
     });
     
 **private and public views**
@@ -152,7 +152,7 @@ Note that Roweis does some route resolution for you. If you write:
     Sammy.Roweis.controllers.def(
       { 
         name: 'skateboard', 
-        path: '#/boards,
+        route: '#/boards,
         view: 'board'
       },
       { name: 'bmx', view: 'skateboard' }
