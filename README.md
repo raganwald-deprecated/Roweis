@@ -114,9 +114,7 @@ Notice that Roweis also does a little "Convention over Configuration:" if a cont
 By default, Roweis creates a controller that simply invokes the Haml view of the same name. It also has a default route of `#/welcome`. You can define some more options. For example, you can use a different route:
 
     Sammy.Roweis.controllers
-      .define('welcome', { 
-        route: '#/' 
-      });
+      .define('welcome', { route: '#/' });
     
 **sharing views**
 
@@ -132,7 +130,7 @@ If we want both controllers to share a public `product.haml` view, we simply say
       .define('skateboard', { view: 'product' })
       .define('bmx',        { view: 'product' });
     
-Of course, many times we don't need to share a view, so Sammy is set up to make you do as little work as possible. I personally prefer that if a view is shared, it gets its own unique name. But that's a matter oif taste. If you want, you can write:
+Of course, many times we don't need to share a view, so Sammy is set up to make you do as little work as possible. I personally prefer that if a view is shared, it gets its own unique name. But that's a matter of taste. If you want, you can write:
 
     Sammy.Roweis.controllers
       .define('skateboard', { view: 'bmx' })
