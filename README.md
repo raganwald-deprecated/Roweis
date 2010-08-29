@@ -19,7 +19,11 @@ Roweis is for you if:
 2. You're familiar with MVC and have used it in at least one other context, e.g. Ruby on Rails.
 3. Your client application is backed by a server that speaks JSON.
 
-**how sammy\_js does it**
+**when**
+
+Roweis has not been released yet. We are extracting it from an active project, and everything is in flux. But we are interested in working with opinionated enthusiasts.
+
+**the basics**
 
 To write a Roweis [single page application][spa], you'll need jQuery, Sammy, Roweis, and one of Sammy's template plug ins ([Haml][haml] recommended). In its simplest form, your single page will expose one page element that Roweis and Sammy will manipulate, something like this:
 
