@@ -164,23 +164,18 @@ Then a user invoking `#/bmx` will have their browser redirect to `#/bmx` or `#sk
 Many Sammy controllers wrap a single call to a RESTful server. Roweis is here to help. Instead of associating a function with a verb, associate a path string with the verb:
 
     Sammy.Roweis.controllers
-      .define({
-        get: 'stories'
-      });
+      .define({ get: 'stories' });
     
 This creates a controller called `stories`, and like the local controller, it invokes a Haml template called `stories.haml`. The difference is that it will take its parameters and use AJAX to invoke a `/stories` path on the server, and then it passes the result to the `stories.haml` view.
 
 Naturally you can combine server controllers with redirection:
 
     Sammy.Roweis.controllers.
-      .define({
-        post: 'logoff',
-        redirectTo: 'welcome'
-      });
+      .define({ post: 'logoff', redirectTo: 'welcome' });
 	
 ---
 
-Stay tuned for more writing. *Roweis was conceived on August 19, 2010*.
+Stay tuned for more writing. *Roweis was conceived on August 19, 2010*. [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] are responsible for the Good, [Reg Braithwaite][raganwald] for the Bad and especially the Ugly.
 
 [sammy]: http://github.com/quirkey/sammy "sammy_js"
 [sinatra]: http://www.sinatrarb.com/
@@ -190,3 +185,6 @@ Stay tuned for more writing. *Roweis was conceived on August 19, 2010*.
 [haml]: http://haml-lang.com/ "#haml"
 [core]: http://www.ridecore.ca "CORE BMX and Boards"
 [prg]: http://en.wikipedia.org/wiki/Post/Redirect/Get
+[aanand]: http://github.com/aanand/
+[jamie]: http://github.com/jamiebikies
+[raganwald]: http://github.com/raganwald
