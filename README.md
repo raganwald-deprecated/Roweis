@@ -171,11 +171,14 @@ This creates a controller called `stories`, and like the local controller, it in
 Naturally you can combine server controllers with redirection:
 
     Sammy.Roweis.controllers.
-      .define({ post: 'logoff', redirectTo: 'welcome' });
+      .define({ post: 'logoff', redirectTo: 'welcome'
+      });
 	
 ---
 
-Stay tuned for more writing. *Roweis was conceived on August 19, 2010*. [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] are responsible for the Good, [Reg Braithwaite][raganwald] for the Bad and especially the Ugly.
+Stay tuned for more writing! [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] are responsible for the Good, [Reg Braithwaite][raganwald] for the Bad and especially the Ugly.
+
+*Roweis was conceived on August 19, 2010*
 
 [sammy]: http://github.com/quirkey/sammy "sammy_js"
 [sinatra]: http://www.sinatrarb.com/
