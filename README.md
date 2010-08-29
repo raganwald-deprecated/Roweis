@@ -95,87 +95,90 @@ And your controller renders the view:
       this.render('welcome.haml', context.params.toHash());
     });
 
-This trades some additional complexity for some separation of concerns. The controller is written in Javascript and the view is written in Haml. You also have some reusability: Multiple controllers can share the same view. And with Roweis, you can write the above code in Sammy's application scope and it works just fine. You can also define a controller throw a global `Sammy.Roweis` object:
+This trades some additional complexity for some separation of concerns. The controller is written in Javascript and the view is written in Haml. You also have some reusability: Multiple controllers can share the same view. And with Roweis, you can write the above code in Sammy's application scope and it works just fine. 
 
-    Sammy.Roweis.controllers.welcome = function () {
-      this.render('welcome.haml', context.params.toHash());
-    };
+Roweis also lets you use the global `Sammy.Roweis` (or `$,sammy.Roweis` if you prefer) to define a controller:
+
+    Sammy.Roweis.controllers
+      .define('welcome', function () {
+        this.render('welcome.haml', context.params.toHash());
+      });
     
 This is significant because it is now very easy to move a controller definition into its own Javascript file. When definitions are very small, moving them around makes coding a chore. But as they get more complex, you might want to group them in various ways. Roweis makes that easy, because you can define controller objects from any Javascript file.
 
 Notice that Roweis also does a little "Convention over Configuration:" if a controller is called `welcome`, the default route for it is `#/welcome`. But Roweis can go further. Notice that the view is called `welcome.haml`? Behold:
 
-    Sammy.Roweis.controllers.def({
-      name: 'welcome'
-    });
+    Sammy.Roweis.controllers
+      .define('welcome');
     
 By default, Roweis creates a controller that simply invokes the Haml view of the same name. It also has a default route of `#/welcome`. You can define some more options. For example, you can use a different route:
 
-    Sammy.Roweis.controllers.def({
-      name: 'welcome',
-      route: '#/'
-    });
+    Sammy.Roweis.controllers
+      .define('welcome', { 
+        route: '#/' 
+      });
     
-**private and public views**
-    
-One thing that is very important to note: When a controller has the same name as a view, the view is *Private*. The only controller that can use it is the controller with the same name. When a view does not share its name with a controller, the view is *Public*, and any controller can use it.
+**sharing views**
 
-We just saw how you associate a controller with a private view in Roweis: You give it the same name and Roweis takes care of the rest. Let's look at public views. Let's assume that we run a [Skateboard and BMX Shop][core]. We have two different routes, `#/skateboard`, and `#bmx`. If they each had their own private view, we would write a `skateboard.haml` view and a `bmx.haml` view. Then we'd write our controllers:
+We just saw how you associate a controller with its own view in Roweis: You give it the same name and Roweis takes care of the rest. Let's look at shared views. Let's assume that we run a [Skateboard and BMX Shop][core]. We have two different routes, `#/skateboard`, and `#bmx`. If they each had their own  view, we would write a `skateboard.haml` view and a `bmx.haml` view. Then we'd write our controllers:
 
-    Sammy.Roweis.controllers.def(
-      { name: 'skateboard' },
-      { name: 'bmx' }
-    );
+    Sammy.Roweis.controllers
+      .define('skateboard')
+      .define('bmx');
     
 If we want both controllers to share a public `product.haml` view, we simply say so:
 
-    Sammy.Roweis.controllers.def(
-      { name: 'skateboard', view: 'product' },
-      { name: 'bmx',        view: 'product' }
+    Sammy.Roweis.controllers
+      .define('skateboard', { view: 'product' })
+      .define('bmx',        { view: 'product' });
+    
+Of course, many times we don't need to share a view, so Sammy is set up to make you do as little work as possible. I personally prefer that if a view is shared, it gets its own unique name. But that's a matter oif taste. If you want, you can write:
+
+    Sammy.Roweis.controllers
+      .define('skateboard', { view: 'bmx' })
+      .define('bmx);
     );
     
-Of course, many times we don't need to share a view, so Sammy is set up to make you do as little work as possible. 
+Both controllers will use `bmx.haml`.
 
 **redirection**
 
-As mentioned, you cannot have a controller use another controller's private view. Consider:
+You often want controllers to redirect to another route:
 
-    Sammy.Roweis.controllers.def(
-      { name: 'skateboard' },
-      { name: 'bmx', view: 'skateboard' }
-    );
+    Sammy.Roweis.controllers
+      .define('skateboard', { redirectTo: 'product' })
+      .define('bmx',        { redirectTo: 'product' })
+      .define('product');
 
-This does **not** cause the `bmx` controller to use `skateboard.haml` as its view. Instead, the `bmx` controller *redirects* to the skateboard controller's route. This is most common when you are posting the results of a form, so much so that it has its own name, [Post/Redirect/Get][prg]. In the example above, a user invoking `#/bmx` will have their browser redirect to `#/skateboard`.
+This is most common when you are posting the results of a form, so much so that it has its own name, [Post/Redirect/Get][prg]. In the example above, a user invoking `#/bmx` or `#skateboard` will have their browser redirect to `#/product`.
 
 Note that Roweis does some route resolution for you. If you write:
 
-    Sammy.Roweis.controllers.def(
-      { 
-        name: 'skateboard', 
-        route: '#/boards,
-        view: 'board'
-      },
-      { name: 'bmx', view: 'skateboard' }
-    );
+    Sammy.Roweis.controllers
+      .define('skateboard', { redirectTo: 'product' })
+      .define('bmx',        { redirectTo: 'product' })
+      .define('product',    { route:      '#/show'  });
 
-Then a user invoking `#/bmx` will have their browser redirect to `#/boards`. The skateboard controller will handle that and use `board.haml` as the view.
+Then a user invoking `#/bmx` will have their browser redirect to `#/bmx` or `#skateboard` will have their browser redirect to `#/show`. The product controller will handle that and use `product.haml` as the view.
   	
 **server controllers**
 
 Many Sammy controllers wrap a single call to a RESTful server. Roweis is here to help. Instead of associating a function with a verb, associate a path string with the verb:
 
-    Sammy.Roweis.controllers.def({
-      get: 'stories'
-    });
+    Sammy.Roweis.controllers
+      .define({
+        get: 'stories'
+      });
     
 This creates a controller called `stories`, and like the local controller, it invokes a Haml template called `stories.haml`. The difference is that it will take its parameters and use AJAX to invoke a `/stories` path on the server, and then it passes the result to the `stories.haml` view.
 
-Sometimes you want to redirect rather than display a view. This happens most frequently with posts. You can do that by naming a controller rather than defining a path to a view. In this example, we are invoking a `logoff` route on the server, then redirecting to our home controller:
+Naturally you can combine server controllers with redirection:
 
-    Sammy.Roweis.controllers.def({
-      post: 'logoff',
-      view: 'home'
-    });
+    Sammy.Roweis.controllers.
+      .define({
+        post: 'logoff',
+        redirectTo: 'welcome'
+      });
 	
 ---
 
