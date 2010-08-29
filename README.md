@@ -171,8 +171,20 @@ This creates a controller called `stories`, and like the local controller, it in
 Naturally you can combine server controllers with redirection:
 
     Sammy.Roweis.controllers.
-      .define({ post: 'logoff', redirectTo: 'welcome'
-      });
+      .define({ post: 'logoff', redirectTo: 'welcome' });
+
+**unobtrusive controllers**
+
+When you want to nest views, Roweis gives you a simple mechanism, "unobtrusive controllers." We start by defining a controller without a route:
+
+    Sammy.Roweis.controllers.
+      .define('widgets', { get: 'widgets', route: false, renders: '.widgets' });
+      
+We've declared that our "widgets" controller does not have a route. This means it can only be displayed indirectly. We've also told Roweis that this controller renders the content for every element matching the jQuery selector `.widgets`.
+
+Whenever Roweis renders *any* view, it will look for placeholder elements matching this selector, perform a `GET` to the server, and replace the placeholders with the contents of `widgets.haml`. Notice that this means the view can depend on lightweight controllers to render itself, rather than having a heavyweight controller updating everything.
+
+
 	
 ---
 
@@ -180,7 +192,7 @@ Stay tuned for more writing! [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] a
 
 *Roweis was conceived on August 19, 2010*
 
-[sammy]: http://github.com/quirkey/sammy "sammy_js"
+  [sammy]: http://github.com/quirkey/sammy "sammy_js"
 [sinatra]: http://www.sinatrarb.com/
 [couch]: http://couchdb.apache.org/
 [cloud]: http://getcloudkit.com/
