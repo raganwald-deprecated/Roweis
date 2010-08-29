@@ -19,7 +19,11 @@ Roweis is for you if:
 2. You're familiar with MVC and have used it in at least one other context, e.g. Ruby on Rails.
 3. Your client application is backed by a server that speaks JSON.
 
-**how sammy\_js does it**
+**when**
+
+Roweis has not been released yet. We are extracting it from an active project, and everything is in flux. But we are interested in working with opinionated enthusiasts.
+
+**the basics**
 
 To write a Roweis [single page application][spa], you'll need jQuery, Sammy, Roweis, and one of Sammy's template plug ins ([Haml][haml] recommended). In its simplest form, your single page will expose one page element that Roweis and Sammy will manipulate, something like this:
 
@@ -97,7 +101,7 @@ And your controller renders the view:
 
 This trades some additional complexity for some separation of concerns. The controller is written in Javascript and the view is written in Haml. You also have some reusability: Multiple controllers can share the same view. And with Roweis, you can write the above code in Sammy's application scope and it works just fine. 
 
-Roweis also lets you use the global `Sammy.Roweis` (or `$,sammy.Roweis` if you prefer) to define a controller:
+Roweis also lets you use the global `Sammy.Roweis` (or `$.sammy.Roweis` if you prefer) to define a controller:
 
     Sammy.Roweis.controllers
       .define('welcome', function () {
@@ -188,7 +192,7 @@ Whenever Roweis renders *any* view, it will look for placeholder elements matchi
 	
 ---
 
-Stay tuned for more writing! [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] are responsible for the Good, [Reg Braithwaite][raganwald] is hogging the credit for both the Bad and the Ugly.
+Stay tuned for more writing! [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] are responsible for the Good, [Reg Braithwaite][raganwald] is hogging the blame for both the Bad and the Ugly.
 
 *Roweis was conceived on August 19, 2010*
 
