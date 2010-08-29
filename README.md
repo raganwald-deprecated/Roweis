@@ -180,7 +180,7 @@ Naturally you can combine server controllers with redirection:
 	
 ---
 
-Stay tuned for more writing. *Roweis was conceived on August 19, 2010*.
+Stay tuned for more writing. *Roweis was conceived on August 19, 2010*. [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] are responsible for the Good, [Reg Braithwaite][raganwald] for the Bad and especially the Ugly.
 
 [sammy]: http://github.com/quirkey/sammy "sammy_js"
 [sinatra]: http://www.sinatrarb.com/
@@ -190,3 +190,6 @@ Stay tuned for more writing. *Roweis was conceived on August 19, 2010*.
 [haml]: http://haml-lang.com/ "#haml"
 [core]: http://www.ridecore.ca "CORE BMX and Boards"
 [prg]: http://en.wikipedia.org/wiki/Post/Redirect/Get
+[aanand]: http://github.com/aanand/
+[jamie]: http://github.com/jamiebikies
+[raganwald]: http://github.com/raganwald
