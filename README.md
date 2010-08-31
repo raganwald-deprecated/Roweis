@@ -13,11 +13,9 @@ Roweis is a plugin for Sammy that makes the "Great way to build simple applicati
 
 **who**
 
-Roweis is for you if:
+Roweis might be a good choice if you want to write a client-side [single page application][spa].
 
-1. You want to write a client-side single page application.
-2. You're familiar with MVC and have used it in at least one other context, e.g. Ruby on Rails.
-3. Your client application is backed by a server that speaks JSON.
+We can't tell you when to do this or why. But as one example, in the project where Roweis is being incubated, we want the server to be highly REST-ful and to manage business logic only. Thus, the server's controllers know about business logic, and the client's controllers know about the user interface.
 
 **when**
 
@@ -25,7 +23,7 @@ Roweis has not been released yet. We are extracting it from an active project, a
 
 **the basics**
 
-To write a Roweis [single page application][spa], you'll need jQuery, Sammy, Roweis, and one of Sammy's template plug ins ([Haml][haml] recommended). In its simplest form, your single page will expose one page element that Roweis and Sammy will manipulate, something like this:
+To write a Roweis [single page application][spa], you'll need jQuery, Sammy, Roweis, and one of Sammy's template plug ins ([Haml][haml] is required at the moment). Roweis applications are Sammy applications, so let's start with Sammy and Haml. In its simplest form, your single page will expose one page element that Sammy will manipulate, something like this:
 
     !!!5
     
@@ -43,9 +41,13 @@ To write a Roweis [single page application][spa], you'll need jQuery, Sammy, Row
         %script{:src=>"jquery.igesture.js", :type=>"text/javascript", :charset=>"utf-8"}
 
       %body
+      
         // Static stuff goes here
-        .roweis_manipulates_this
-        // And here
+        
+        // Sammy will put its dunamic stuff in this div:
+        .main
+        
+        // More static stuff here
 
 You then write an `application.js` file for Sammy:
 
@@ -53,8 +55,7 @@ You then write an `application.js` file for Sammy:
 
       var app = $.sammy(function() {
       	this.use(Sammy.Haml);
-      	this.use(Sammy.Roweis); // Don't forget to tell it you use Roweis!
-      	this.element_selector = '.roweis_manipulates_this'; 
+      	this.element_selector = '.main'; 
       });
 
       $(function() {
@@ -72,50 +73,79 @@ You then write an `application.js` file for Sammy:
 	
     })(jQuery);
     
-Now you're ready to write controllers and views.
+Now you're ready to write controllers and views in Sammy.
     
-**mvc**
-
-In the Model-View-Controller ("MVC") architectural pattern, the concerns of domain logic, presentation of data, and input are separated into "Models," "Views," and "Controllers." This separation facilitates independent testing and re-use. MVC is not the be-all and end-all of architecture, but it is appropriate for some applications.
-
-Roweis is silent on the subject of models. Roweis assumes the existence of a back-end web server or web service that manages the models, while your application provides views and controllers. The purpose of Roweis is to give you a place to put your views and controllers, and to provide a smooth transition from intermingling view and controller code in the same function up to placing views and controllers in their own independent Javascript files.
-
-**controllers and views**
+**controllers and views in sammy**
     
-In Sammy and Roweis, controllers are chunks of code that handle HTTP requests, and views are chunks of code that manipulate the DOM of your single page application. It is possible to intermingle controller and view code. In Sammy and in Roweis, you can write a single function that handles a request for a route and directly manipulates the DOM:
+In Sammy, controllers are chunks of code that handle HTTP requests, and views are chunks of code that manipulate the DOM of your single page application. It is possible to intermingle controller and view code. In Sammy, you can write a function that handles a request for a route and directly manipulates the DOM:
 
-    this.get('#/welcome', function() {
-      $('.main').text('Welcome!');
-    });
+    ;(function ($) {
+
+      var app = $.sammy(function() {
+      	this.use(Sammy.Haml);
+      	this.element_selector = '.main'; 
+      });
+
+      $(function() {
+      
+        this.get('#/welcome', function() {
+          $('.main').text('Welcome to my JS view!');
+        });
+
+      	app.run('#/welcome');
+    	
+      });
+	
+    })(jQuery);
 
 If you want to split things into a controller and a view, you write a Haml template, e.g. `welcome.haml`:
 
     // welcome.haml
     Welcome to my Haml view!
 
-And your controller renders the view:
+And your controller renders the view using Sammy's `.partial` method to interpolate the Haml template and Sammy's `.swap` method to insert the result into the page:
 
-    this.get('#/welcome', function (context) {
-      this.render('welcome.haml', context.params.toHash());
-    });
+    ;(function ($) {
 
-This trades some additional complexity for some separation of concerns. The controller is written in Javascript and the view is written in Haml. You also have some reusability: Multiple controllers can share the same view. And with Roweis, you can write the above code in Sammy's application scope and it works just fine. 
+      var app = $.sammy(function() {
+      	this.use(Sammy.Haml);
+      	this.element_selector = '.main'; 
+      });
 
-Roweis also lets you use the global `Sammy.Roweis` (or `$.sammy.Roweis` if you prefer) to define a controller:
+      $(function() {
+      
+        this.get('#/welcome', function (context) {
+          this.partial('welcome.haml', {}, function (html) { app.swap(html); });
+        });
+
+      	app.run('#/welcome');
+    	
+      });
+	
+    })(jQuery);
+
+**controllers and views in roweis**
+
+A Roweis application is a Sammy application. Sammy applications associate functions with routes. Roweis is simply a tool for generating some or even all of those functions for you and then registering them with Sammy.
+
+In the simplest case, you can use Roweis to register a function with Sammy from outside of your `application.js` file:
 
     Sammy.Roweis.controllers
-      .define('welcome', function () {
-        this.render('welcome.haml', context.params.toHash());
-      });
+      .define('welcome', // the name of the controller, must be unique
+        function () {
+          this.partial('welcome.haml', {}, function (html) { app.swap(html); });
+        });
     
-This is significant because it is now very easy to move a controller definition into its own Javascript file. When definitions are very small, moving them around makes coding a chore. But as they get more complex, you might want to group them in various ways. Roweis makes that easy, because you can define controller objects from any Javascript file.
+This is useful because it is now very easy to move a controller definition into its own Javascript file. When definitions are very small, moving them around makes coding a chore. But as they get more complex, you might want to group them in various ways. Roweis makes that easy, because you can define controller objects from any Javascript file.
 
-Notice that Roweis also does a little "Convention over Configuration:" if a controller is called `welcome`, the default route for it is `#/welcome`. But Roweis can go further. Notice that the view is called `welcome.haml`? Behold:
+Notice that Roweis also does a little "Convention over Configuration:" if a controller is called `welcome`, the default route for it is `#/welcome`.
+
+But Roweis can go further. Notice that the view is called `welcome.haml`? Behold:
 
     Sammy.Roweis.controllers
       .define('welcome');
     
-By default, Roweis creates a controller that simply invokes the Haml view of the same name. It also has a default route of `#/welcome`. You can define some more options. For example, you can use a different route:
+By default, Roweis creates a controller that simply invokes the Haml view of the same name for you. It also has a default route of `#/welcome`. You can define some more options. For example, you can use a different route:
 
     Sammy.Roweis.controllers
       .define('welcome', { route: '#/' });
