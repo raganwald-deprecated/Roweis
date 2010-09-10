@@ -3,7 +3,7 @@ Roweis
 
 *Lightweight controllers and views for the [Sammy][sammy] JS framework.*
 
-**what**
+**what!?**
 
 [Sammy][sammy] is a lightweight (&lt;20K) framework for writing single page Javascript applications. Sammy uses [Sinatra][sinatra]-like simple route definitions and structure. Sammy allows programs to respond to specific URLs, and utilizing the URL hash (#) you can create single page applications that still respond to the back button, like Gmail.
 
@@ -11,7 +11,7 @@ Sammy is touted as "A great way to build simple to complex applications built up
 
 Roweis is a plugin for Sammy that makes the "Great way to build simple applications built upon RESTful data stores" ridiculously easy by delivering a lot of the code you need right out of the box by default and emphasizing convention over configuration.
 
-**who**
+**for whom**
 
 Roweis might be a good choice if you want to write a client-side [single page application][spa].
 
