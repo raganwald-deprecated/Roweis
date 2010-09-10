@@ -126,7 +126,7 @@ And your controller renders the view using Sammy's `.partial` method to interpol
 How to Write a Sammy App using Roweis
 ---
 
-Now we'll take a look at using Roweis to write your Sammy app. In addition to jQuery, Sammy, and Hanl, we'll also need Roweis and Functional Javascript (a dependency at the moment). Our single page is almost exactly the same with Roweis as it is with Sammy, only the included Javascript files are different:
+Now we'll take a look at using Roweis to write your Sammy app. In addition to jQuery, Sammy, and Haml, we'll also need Roweis and Functional Javascript (a dependency at the moment). Our single page is almost exactly the same with Roweis as it is with Sammy, only the included Javascript files are different:
 
     !!!5
     
@@ -195,7 +195,7 @@ This is useful because it is now very easy to move a handler definition into its
 
 Everything Roweis defines for you is a handler. By convention, a handler that is intended to display model information without changing it is called a "view," and a handler designed to change model information is a "controller." Roweis encourages delimitating your handlers this way, although it is not impossible to write views that modify data or controllers that display data.
 
-**convention over confoguration*
+**convention over configuration**
 
 Notice that Roweis also does a little "Convention over Configuration:" if a controller is called `welcome`, the default route for it is `#/welcome`, and we don't have to define that separately. And Roweis can go further. If you have a view with the same name as a partial, why repeat yourself?
 
@@ -260,16 +260,23 @@ In Roweis parlance, a view presents something but doesn't modify anything. A con
       .controller('new_bmx',        { redirects_to: 'show_product' })
       .view('show_product');
       
-Like a view, a controller can also interact with a remote server:
+Like a view, a controller can also interact with a remote server. Here's a complete example:
 
     Sammy.Roweis.example
+    
+      .view('design_your_own_skateboard'),
+      
       .controller('new_skateboard', {
         posts: 'http://someserver.com/skateboards',
-        redirects_to: 'show_product/:id' 
+        redirects_to: 'rad_product/:id' 
       })
-      .view('show_product');
+      
+      .view('rad_product' {
+        route: '#/rad/:id',
+        gets: 'http://someserver.com/products/:_id'
+      });
 
-This definition assumes that the JSON returned by the POST is going to include an `id`.
+In this sequence, `design_your_own_skateboard.haml` would contain a form that executes a POST to `#/new_skateboard'. The `new\_skateboard` controller would post that information to the server, and we assume that the JSON returned by the POST is going to include an `id`. The controller would then redirect to the `rad\_product` view, which would go back to the serevr to retrieve the skateboard's details and to display the new, totally rad skateboard using `rad\_product.haml`.
 
 **unobtrusive views**
 
