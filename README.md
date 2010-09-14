@@ -126,7 +126,7 @@ And your controller renders the view using Sammy's `.partial` method to interpol
 How to Write a Sammy App using Roweis
 ---
 
-Now we'll take a look at using Roweis to write your Sammy app. In addition to jQuery, Sammy, and Haml, we'll also need Roweis and Functional Javascript (a dependency at the moment). Our single page is almost exactly the same with Roweis as it is with Sammy, only the included Javascript files are different:
+Now we'll take a look at using Roweis to write your Sammy app. In addition to jQuery, Sammy, and Haml, we'll also need Roweis and [Functional Javascript][functional] (a dependency at the moment). Our single page is almost exactly the same with Roweis as it is with Sammy, only the included Javascript files are different:
 
     !!!5
     
@@ -276,7 +276,7 @@ Like a view, a controller can also interact with a remote server. Here's a compl
         gets: 'http://someserver.com/products/:_id'
       });
 
-In this sequence, `design_your_own_skateboard.haml` would contain a form that executes a POST to `#/new_skateboard'. The `new\_skateboard` controller would post that information to the server, and we assume that the JSON returned by the POST is going to include an `id`. The controller would then redirect to the `rad\_product` view, which would go back to the serevr to retrieve the skateboard's details and to display the new, totally rad skateboard using `rad\_product.haml`.
+In this sequence, `design_your_own_skateboard.haml` would contain a form that executes a POST to `#/new_skateboard'. The `new\_skateboard` controller would post that information to the server, and we assume that the JSON returned by the POST is going to include an `id`. The controller would then redirect to the `rad\_product` view, which would go back to the server to retrieve the skateboard's details and to display the new, totally rad skateboard using `rad\_product.haml`.
 
 **unobtrusive views**
 
@@ -297,7 +297,7 @@ Stay tuned for more writing! [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] a
 
 *Roweis was conceived on August 19, 2010*
 
-  [sammy]: http://github.com/quirkey/sammy "sammy_js"
+[sammy]: http://github.com/quirkey/sammy "sammy_js"
 [sinatra]: http://www.sinatrarb.com/
 [couch]: http://couchdb.apache.org/
 [cloud]: http://getcloudkit.com/

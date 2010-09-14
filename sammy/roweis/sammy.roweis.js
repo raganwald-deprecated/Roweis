@@ -246,20 +246,46 @@ THE SOFTWARE.
               }
             });
           }
+          
+          var data_melder = function(render_context, data) {
+            return function (html_rendered) {
+              trigger_after_event('after.action_render') (
+                render_context, 
+                meld(data, { etc: { html_rendered: html_rendered } })
+              );
+            };
+          };
+          
+          var render_one_or_many_datums = function(render_context, data, datum_renderer) {
+            var render_callback = data_melder(render_context, data);
+            var server_data = (data && data.etc && data.etc.server_data) || {};
+            var pseudoLength = isLikeAnArrayLength(server_data);
+            if (pseudoLength) {
+              // create a new scope so we can use 'rendering in progress'
+              var rendering_in_progress = '';
+              var renderers = [];
+              for (var i = 0; i < pseudoLength; ++i) {
+                (function (this_index) {
+                  renderers.push(function () {
+                    datum_renderer(function (rendered) {
+                      rendering_in_progress = rendering_in_progress + rendered + '\n';
+                      renderers[this_index + 1]();
+                    })(this_index, server_data[this_index]);
+                  });
+                })(i)
+              }
+              renderers.push(function () {
+                render_callback(rendering_in_progress);
+              });
+              renderers[0]();
+            }
+            else datum_renderer(render_callback)(0, server_data);
+          };
         
           if (undefined === handler.action_render) {
             if (config.partial) {
               handler.action_render = function (render_context, data) {
-                // console.log('data available to rendering of ' + handler.config.name + 's action_render: ');
-                // console.log(data); 
-                var server_data = (data && data.etc && data.etc.server_data) || {};
-                var render_callback = function (html_rendered) {
-                  trigger_after_event('after.action_render') (
-                    render_context, 
-                    meld(data, { etc: { html_rendered: html_rendered } })
-                  );
-                }
-                var render_datum = function (datum_callback) {
+                render_one_or_many_datums(render_context, data, function (datum_callback) {
                   return function (i, datum) {
                     var localData = meld(
                       { 
@@ -276,30 +302,27 @@ THE SOFTWARE.
                       datum_callback
                     );
                   };
-                };
-                var pseudoLength = isLikeAnArrayLength(server_data);
-                if (pseudoLength) {
-                  // create a new scope so we can use 'rendering in progress'
-                  var rendering_in_progress = '';
-                  var renderers = [];
-                  for (var i = 0; i < pseudoLength; ++i) {
-                    (function (this_index) {
-                      renderers.push(function () {
-                        render_datum(function (rendered) {
-                          rendering_in_progress = rendering_in_progress + rendered + '\n';
-                          renderers[this_index + 1]();
-                        })(this_index, server_data[this_index]);
-                      });
-                    })(i)
-                  }
-                  renderers.push(function () {
-                    render_callback(rendering_in_progress);
-                  });
-                  renderers[0]();
-                }
-                else render_datum(render_callback)(0, server_data);
+                });
               };
             };
+          }
+          else if ('function' === typeof(handler.action_render)) {
+            var unwrapped_handler = handler.action_render;
+            if (0 === unwrapped_handler.length) {
+              handler.action_render = function (render_context, data) {
+                var html = unwrapped_handler();
+                data_melder(render_context, data)(html);
+              };
+            }
+            else if (1 === unwrapped_handler.length) {
+              handler.action_render = function (render_context, data) {
+                render_one_or_many_datums(render_context, data, function (data_callback) {
+                  return function (i, datum) {
+                    data_callback(unwrapped_handler(datum));
+                  };
+                });
+              };
+            }
           }
         
           if (undefined === handler.action_update_dom) {

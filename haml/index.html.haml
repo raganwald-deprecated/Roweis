@@ -1,0 +1,29 @@
+// (c) 2010 Reg Braithwaite. All rights to the entirety of the program and its parts are reserved with 
+// the exception of specific files otherwise licensed. Other licenses apply only to the files where
+// they appear.
+
+!!!Strict
+%html{html_attrs('en')}
+  %head
+  
+    %title Roweis Examples
+  
+    %script{:src=>"j/jquery.1.4.2.js", :type=>"text/javascript", :charset=>"utf-8"}
+    %script{:src=>"j/to-function.js", :type=>"text/javascript", :charset=>"utf-8"}
+    %script{:src=>"j/functional.js", :type=>"text/javascript", :charset=>"utf-8"}
+    
+    %script{:src=>"j/jquery.combinators.js", :type=>"text/javascript", :charset=>"utf-8"}
+    %script{:src=>"j/jquery.predicates.js", :type=>"text/javascript", :charset=>"utf-8"}
+    
+    %script{:src=>"sammy/sammy.js", :type=>"text/javascript", :charset=>"utf-8"}
+    %script{:src=>"sammy/plugins/sammy.haml.js", :type=>"text/javascript", :charset=>"utf-8"}
+    %script{:src=>"sammy/roweis/sammy.roweis.js", :type=>"text/javascript", :charset=>"utf-8"}
+    
+    %script{:src=>"application.js", :type=>"text/javascript", :charset=>"utf-8"}
+    
+  %body
+  
+  .form{:action=>'#/en_passant', :method=>'POST'}
+    %input{:type=>'submit'}
+  
+  .main
