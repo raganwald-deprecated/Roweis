@@ -16,6 +16,8 @@ var comments = $.sammy(function() {
    parent: main,
    partial_root: 'haml'
   }));
+  // TODO: We want to listen to our parent's events
+  // on .main, but we want to render into our own selector in .comment_form
  this.element_selector = '.main';
 });
 
