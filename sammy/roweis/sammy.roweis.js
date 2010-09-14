@@ -144,6 +144,9 @@ THE SOFTWARE.
       
         roweis[app_name] = app;
         host = host || '';
+        if (undefined !== app_options.parent) {
+          app.namespace = app_options.parent.namespace;
+        }
       
         var define = function (config) {
         
@@ -328,7 +331,7 @@ THE SOFTWARE.
           if (undefined === handler.action_update_dom) {
             if (config.route) {
               handler.action_update_dom = function (update_context, data) {
-                var html_rendered = data.etc.html_rendered;
+                var html_rendered = data && data.etc && data.etc.html_rendered;
                 if (html_rendered) {
                   app.swap(html_rendered);
                   trigger_after_event('after.action_update_dom')(update_context, data);
@@ -349,7 +352,12 @@ THE SOFTWARE.
                               .replaceWith(html_rendered);
                             p_parent
                               .children()
-                                .effect("highlight", app_options.highlight_options, app_options.highlight_duration);
+                                .when('.effect')
+                                  .ergo(function (new_elements) {
+                                    new_elements
+                                      .effect("highlight", app_options.highlight_options, app_options.highlight_duration)
+                                  })
+                                  ;
                             trigger_after_event('after.action_update_dom')(update_context, data);
                         })
                         .end()
@@ -362,6 +370,14 @@ THE SOFTWARE.
           if (undefined === handler.action_redirect && config.redirects_to) {
             handler.action_redirect = function (redirect_context, data) {
               redirect_context.redirect(interpolate(config.redirects_to, redirect_context));
+              trigger_after_event('after.action_redirect')(redirect_context, data);
+            }
+          }
+        
+          if (undefined === handler.action_redirect && config.relocates_to) {
+            handler.action_redirect = function (redirect_context, data) {
+              var new_location = interpolate(config.redirects_to, redirect_context);
+              app.setLocation(new_location);
               trigger_after_event('after.action_redirect')(redirect_context, data);
             }
           }
@@ -458,12 +474,22 @@ THE SOFTWARE.
       ]).join('?')
     };
     
-    roweis.relocate = function(path, optional_data) {
+    roweis.redirect = function(path, optional_data) {
       if (optional_data) {
         path = roweis.fully_interpolated(path, optional_data);
       }
       if (path.match(/^#/)) {
         window.location.hash = path.substring(1);
+      }
+      else window.location = path;
+    };
+    
+    roweis.relocate = function(path, optional_data) {
+      if (optional_data) {
+        path = roweis.fully_interpolated(path, optional_data);
+      }
+      if (path.match(/^#/)) {
+        app.setLocation(path.substring(1));
       }
       else window.location = path;
     };
