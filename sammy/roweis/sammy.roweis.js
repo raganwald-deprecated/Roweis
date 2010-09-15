@@ -144,8 +144,18 @@ THE SOFTWARE.
       
         roweis[app_name] = app;
         host = host || '';
+        
+        app.children = [];
+        
+        // children receive events from parents
         if (undefined !== app_options.parent) {
-          app.namespace = app_options.parent.namespace;
+          app.parent = app_options.parent;
+          app.parent.children.push(app);
+        }
+        
+        // $$element is the element to update the DOM
+        app.$$element = function () {
+          return $(app_options.element_selector || app.element_selector || 'body');
         }
       
         var define = function (config) {
@@ -186,16 +196,12 @@ THE SOFTWARE.
           var trigger_after_event = function (event_name) {
             return function (context, optional_data) {
               var data = optional_data || {};
-              
               var my_event = my_after_event_name(event_name);
-              //console.log('('+handler.config.name+'): triggering ' + my_event);
-              app.trigger(my_event, data);
-              //console.log('('+handler.config.name+'): '+my_event + ' was triggered');
-              
-              //console.log('('+handler.config.name+'): triggering ' + event_name);
-              app.trigger(event_name, data);
-              //console.log('('+handler.config.name+'): '+event_name + ' was triggered');
-              
+              var apps_to_trigger = $.merge([app], app.children);
+              $.each(apps_to_trigger, function (i, app_to_trigger) {
+                app_to_trigger.trigger(my_event, data);
+                app_to_trigger.trigger(event_name, data);
+              });
             };
           };
 
@@ -333,7 +339,9 @@ THE SOFTWARE.
               handler.action_update_dom = function (update_context, data) {
                 var html_rendered = data && data.etc && data.etc.html_rendered;
                 if (html_rendered) {
-                  app.swap(html_rendered);
+                  app
+                    .$$element()
+                      .html(html_rendered);
                   trigger_after_event('after.action_update_dom')(update_context, data);
                 }
               };
@@ -343,7 +351,7 @@ THE SOFTWARE.
                 var html_rendered = data.etc.html_rendered;
                 if (html_rendered) {
                   app
-                    .$element()
+                    .$$element()
                       .find(config.renders)
                         .ergo(function (placeholder) {
                             var p_parent = placeholder
@@ -373,14 +381,6 @@ THE SOFTWARE.
               trigger_after_event('after.action_redirect')(redirect_context, data);
             }
           }
-        
-          if (undefined === handler.action_redirect && config.relocates_to) {
-            handler.action_redirect = function (redirect_context, data) {
-              var new_location = interpolate(config.redirects_to, redirect_context);
-              app.setLocation(new_location);
-              trigger_after_event('after.action_redirect')(redirect_context, data);
-            }
-          }
           
           // now we wire our action steps to each other with events
           var action_steps_in_use = $.map(action_steps, function (action_step) {
@@ -401,17 +401,19 @@ THE SOFTWARE.
               });
             }
             if (config.renders) { 
-              app.bind('after.action_update_dom', function (e, data) {
+              app.$element().data('observed', true);
+              var updater_fn = function (e, data) {
                 // If the selector defined by the controller being bound matches the 
                 // data, we care about this and want to hear when it's done rendering
-                if(app.$element().find(config.renders).length) {
-                  
-                  //var invokee = handler[first_step];
-                  
+                if (app.$$element().find(config.renders).length) {
                   callback(this, data);
-                  
                 }
-              });
+                else console.log('nothing to render this time, thanks for playing');
+              };
+              app
+                .bind('after.action_update_dom', updater_fn)
+                // .bind('run', function() {console.log('running from render')})
+                .bind('run', updater_fn);
             }
           })(handler[first_step]);
         
@@ -480,16 +482,6 @@ THE SOFTWARE.
       }
       if (path.match(/^#/)) {
         window.location.hash = path.substring(1);
-      }
-      else window.location = path;
-    };
-    
-    roweis.relocate = function(path, optional_data) {
-      if (optional_data) {
-        path = roweis.fully_interpolated(path, optional_data);
-      }
-      if (path.match(/^#/)) {
-        app.setLocation(path.substring(1));
       }
       else window.location = path;
     };
