@@ -153,9 +153,11 @@ THE SOFTWARE.
           app.parent.children.push(app);
         }
         
+        var root_element_selector = app_options.updates || app.element_selector || 'body';
+        
         // $$element is the element to update the DOM
         app.$$element = function () {
-          return $(app_options.element_selector || app.element_selector || 'body');
+          return $(root_element_selector);
         }
       
         var define = function (config) {
@@ -176,13 +178,22 @@ THE SOFTWARE.
             config.route = '#/' + config.name;
           }
           
-          // and a default view
+          // and a default partial
         
-          if (undefined === config.partial) {
-            config.partial = app_options.partial_root + '/' + config.name;
-            if (!config.partial.match(/\.[^\/]+$/)) {
-              config.partial = config.partial + app_options.partial_suffix;
-            }
+          if (undefined === config.partial) {;
+            config.partial = config.name
+          }
+          if (app_options.partial_root) {
+            config.partial = [app_options.partial_root, config.partial].join('/');
+          }
+          if (app_options.partial_suffix && !config.partial.match(/\.[^\/]+$/)) {
+            config.partial = config.partial + app_options.partial_suffix;
+          }
+          
+          // and a default DOM selector to update
+          
+          if (undefined === config.updates) {
+            config.updates = config.renders || root_element_selector;
           }
           
           // Now we're ready to build the view or controller
@@ -223,7 +234,9 @@ THE SOFTWARE.
             }
           });
         
-          // Start: action_base
+          //
+          // ACTION_BASE
+          //
           
           if (undefined === handler.action_base) {
             // check for a server path
@@ -251,12 +264,15 @@ THE SOFTWARE.
                   };
                   $.ajax(request_object);
                 };
-                
               }
             });
           }
           
-          var data_melder = function(render_context, data) {
+          //
+          // ACTION_RENDER
+          //
+          
+          var meld_html_with_data_and_trigger_after_event = function(render_context, data) {
             return function (html_rendered) {
               trigger_after_event('after.action_render') (
                 render_context, 
@@ -265,9 +281,9 @@ THE SOFTWARE.
             };
           };
           
-          var render_one_or_many_datums = function(render_context, data, datum_renderer) {
-            var render_callback = data_melder(render_context, data);
-            var server_data = (data && data.etc && data.etc.server_data) || {};
+          var render_one_or_many_datums_to_html = function(render_context, data, datum_renderer) {
+            var render_callback = meld_html_with_data_and_trigger_after_event(render_context, data);
+            var server_data = (data && data.etc && data.etc.server_data) || render_context.params.toHash();
             var pseudoLength = isLikeAnArrayLength(server_data);
             if (pseudoLength) {
               // create a new scope so we can use 'rendering in progress'
@@ -294,7 +310,7 @@ THE SOFTWARE.
           if (undefined === handler.action_render) {
             if (config.partial) {
               handler.action_render = function (render_context, data) {
-                render_one_or_many_datums(render_context, data, function (datum_callback) {
+                render_one_or_many_datums_to_html(render_context, data, function (datum_callback) {
                   return function (i, datum) {
                     var localData = meld(
                       { 
@@ -320,12 +336,12 @@ THE SOFTWARE.
             if (0 === unwrapped_handler.length) {
               handler.action_render = function (render_context, data) {
                 var html = unwrapped_handler();
-                data_melder(render_context, data)(html);
+                meld_html_with_data_and_trigger_after_event(render_context, data)(html);
               };
             }
             else if (1 === unwrapped_handler.length) {
               handler.action_render = function (render_context, data) {
-                render_one_or_many_datums(render_context, data, function (data_callback) {
+                render_one_or_many_datums_to_html(render_context, data, function (data_callback) {
                   return function (i, datum) {
                     data_callback(unwrapped_handler(datum));
                   };
@@ -333,43 +349,64 @@ THE SOFTWARE.
               };
             }
           }
+          
+          //
+          // ACTION_UPDATE_DOM
+          //
         
           if (undefined === handler.action_update_dom) {
-            if (config.route) {
+            var actions = []
+            if (config.updates) {
+              actions.push(function (html_rendered) {
+                $(config.updates)
+                  .html(html_rendered);
+                return true;
+              })
+            }
+            if (config.appends_to) {
+              actions.push(function (html_rendered) {
+                $(html_rendered)
+                  .appendTo(config.appends_to);
+                return true;
+              })
+            }
+            if (config.renders) {
+              actions.push(function (html_rendered) {
+                var return_value = false;
+                app
+                  .$$element()
+                    .find(config.renders)
+                      .ergo(function (placeholder) {
+                        return_value = true;
+                        var p_parent = placeholder
+                          .parent();
+                        placeholder
+                          .replaceWith(html_rendered);
+                        p_parent
+                          .children()
+                            .when('.effect')
+                              .ergo(function (new_elements) {
+                                new_elements
+                                  .effect("highlight", app_options.highlight_options, app_options.highlight_duration)
+                              })
+                              ;
+                      })
+                      .end()
+                    .end();
+                return return_value;
+              })
+            }
+            if (actions.length) {
               handler.action_update_dom = function (update_context, data) {
                 var html_rendered = data && data.etc && data.etc.html_rendered;
                 if (html_rendered) {
-                  app
-                    .$$element()
-                      .html(html_rendered);
-                  trigger_after_event('after.action_update_dom')(update_context, data);
-                }
-              };
-            }
-            else if (config.renders) {
-              handler.action_update_dom = function (update_context, data) {
-                var html_rendered = data.etc.html_rendered;
-                if (html_rendered) {
-                  app
-                    .$$element()
-                      .find(config.renders)
-                        .ergo(function (placeholder) {
-                            var p_parent = placeholder
-                              .parent();
-                            placeholder
-                              .replaceWith(html_rendered);
-                            p_parent
-                              .children()
-                                .when('.effect')
-                                  .ergo(function (new_elements) {
-                                    new_elements
-                                      .effect("highlight", app_options.highlight_options, app_options.highlight_duration)
-                                  })
-                                  ;
-                            trigger_after_event('after.action_update_dom')(update_context, data);
-                        })
-                        .end()
-                      .end();
+                  var dom_is_dirty = false;
+                  $.each(actions, function (i, action_fn) {
+                    dom_is_dirty = action_fn(html_rendered) || dom_is_dirty;
+                  })
+                  if (dom_is_dirty) {
+                    trigger_after_event('after.action_update_dom')(update_context, data);
+                  }
                 }
               };
             }
@@ -408,7 +445,6 @@ THE SOFTWARE.
                 if (app.$$element().find(config.renders).length) {
                   callback(this, data);
                 }
-                else console.log('nothing to render this time, thanks for playing');
               };
               app
                 .bind('after.action_update_dom', updater_fn)
@@ -436,7 +472,8 @@ THE SOFTWARE.
       
         app.view = function (optional_name, optional_config) {
           define(configulator(optional_name, optional_config, { 
-            method: 'get', 
+            method: 'get',
+            appends_to: false,
             action_redirect: false 
           }));
           return app;
@@ -445,9 +482,9 @@ THE SOFTWARE.
         app.controller = function (optional_name, optional_config) {
           define(configulator(optional_name, optional_config, { 
             method: 'post', 
-            action_render: false,
-            action_update_dom: false,
-            view: false 
+            updates: false,
+            appends_to: false,
+            partial: false
           }));
           return app;
         };
