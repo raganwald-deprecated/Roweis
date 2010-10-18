@@ -43,7 +43,7 @@ To write a typical Sammy [single page application][spa], you'd use jQuery, Sammy
       
         // Static stuff goes here
         
-        // Sammy will put its dunamic stuff in this div:
+        // Sammy will put its dynamic stuff in this div:
         .main
         
         // More static stuff here
@@ -153,7 +153,7 @@ Now we'll take a look at using Roweis to write your Sammy app. In addition to jQ
       
         // Static stuff goes here
         
-        // Sammy will put its dunamic stuff in this div:
+        // Sammy will put its dynamic stuff in this div:
         .main
         
         // More static stuff here
