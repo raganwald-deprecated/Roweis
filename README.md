@@ -1,7 +1,37 @@
 Roweis
 ===
 
-*Lightweight controllers and views for the [Sammy][sammy] JS framework.*
+*Use convention over configuration to implement your views and controllers in the browser*.
+
+Roweis is a Javascript framework. You use Roweis to build [Single Page Interface][spi] applications that are factored into *Views* for displaying information, and *Controllers* for changing information. Roweis makes this easy by supporting minimal configuration. You can write things like:
+
+    .view('welcome')
+
+Or:
+
+    .view('products', {
+      gets: { 
+        product_list: '/products',
+        recent_activity: '/products/activities'
+      }
+    })
+
+Or:
+
+    .controller('logout', {
+      posts: '/authentication/logout'
+      redirects_to: '#/'
+    })
+
+And Roweis does the rest, linking your definitions with HTML templates (like Haml files) and AJAX calls to a server or servers that implement your model logic.
+
+**where are the models?**
+
+Let's start with the big problem we were trying to solve when we wrote Roweis. We like to build REST-ful servers, and we use tools like node.js and Rails that make REST easy. REST-ful interfaces are model-centric. The problem comes in building a user interface. User interfaces don't always map directly onto the REST-ful API. In one of the example snippets above, a fictitious view called 'products' displays information from two different collections of models: products and activities.
+
+In a typical Rails app, for example, you implement the user interface in templates and controllers. It's fine for a REST-ful server to know how to serve products and activities for products separately. But serving both at the same time is an interface issue. If you build another route in to serve both, you're diluting the clean REST-ful nature of your server.
+
+The solution to us was to factor the model logic into a "model server" that is strictly REST-ful. The views and controllers go somewhere else. We could build a separate Rails server that talks to the model server using curl or MQ, but for our purposes, pushing views and controllers into the browser made sense because were building a Single Page APplication anyways.
 
 **what!?**
 
@@ -297,7 +327,7 @@ Stay tuned for more writing! [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] a
 
 *Roweis was conceived on August 19, 2010*
 
-  [sammy]: http://github.com/quirkey/sammy "sammy_js"
+[sammy]: http://github.com/quirkey/sammy "sammy_js"
 [sinatra]: http://www.sinatrarb.com/
 [couch]: http://couchdb.apache.org/
 [cloud]: http://getcloudkit.com/
@@ -309,3 +339,4 @@ Stay tuned for more writing! [Aanand Prasad][aanand] and [Jamie Gilgen][jamie] a
 [jamie]: http://github.com/jamiebikies
 [raganwald]: http://github.com/raganwald
 [functional]: http://osteele.com/sources/javascript/functional/
+[spi]: http://itsnat.sourceforge.net/php/spim/spi_manifesto_en.php "The Single Page Interface Manifesto"
