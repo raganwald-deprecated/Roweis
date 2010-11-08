@@ -1,0 +1,1241 @@
+<!DOCTYPE html>  <html> <head>   <title>sammy.roweis.js</title>   <meta http-equiv="content-type" content="text/html; charset=UTF-8">   <link rel="stylesheet" media="all" href="docco.css" /> </head> <body>   <div id="container">     <div id="background"></div>          <table cellpadding="0" cellspacing="0">       <thead>         <tr>           <th class="docs">             <h1>               sammy.roweis.js             </h1>           </th>           <th class="code">           </th>         </tr>       </thead>       <tbody>                               <tr id="section-1">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-1">#</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre><span class="p">;(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">$</span><span class="p">,</span> <span class="kc">undefined</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-2">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-2">#</a>               </div>               <h2>What is Roweis?</h2>
+
+<p><strong>Roweis</strong> is a <a href="http://code.quirkey.com/sammy/index.html">Sammy</a> plugin for building 
+<a href="http://itsnat.sourceforge.net/php/spim/spi_manifesto_en.php">Single Page Interface</a>
+applications in a highly declarative manner using convention over configuration.</p>
+
+<p>Roweis is not a framework: Roweis does not provide an "abstraction" that happens to be implemented
+using Sammy. Instead, Roweis provides helper methods that build
+Sammy <a href="http://code.quirkey.com/sammy/docs/routes.html">route</a> and
+<a href="http://code.quirkey.com/sammy/docs/events.html">event</a> handlers for you.</p>
+
+<p>The simplest case is a function that handles accessing a particular hash location.
+In Sammy, you would write a function to handle the root hash like this:</p>
+
+<pre><code>this.get('#/', function(context) {
+  ...
+});
+</code></pre>
+
+<p>Roweis takes a configuration hash and does two things with it:</p>
+
+<ol>
+<li>Roweis builds a handler function, and</li>
+<li>Roweis binds the handler function to the hash location.</li>
+</ol>
+
+<p>In Roweis, you would declare a handler for the root hash location like this:</p>
+
+<pre><code>app.display({
+  route: '',
+  ...
+});
+</code></pre>
+
+<p>The comments below will explain what else would be declared and why. The main thing is that Roweis
+does most of its work with a hash of configuration options rather than a function, and it makes the function
+for you, so that it ends up calling <code>.get('#/', ...)</code> on your behalf.</p>
+
+<p>Roweis is a mildly opinionated library: Roweis is designed to help you build and maintain a certain type 
+of client-side application. That does not mean that other types of applications are undesirable, just
+that this is what Roweis does. The two reasons that Roweis is a library and not a framewok are:</p>
+
+<ol>
+<li>Roweis does not seek to teach you a non-portable abstraction to replace portable concepts like
+URLs and hashes. Therefore, Roweis writes functions that happily live in Sammy's abstraction.</li>
+<li>Roweis seeks to make simple things easy and complex things possible. Therefore, when you need to 
+do something outside of Roweis's sweet spot, you can work directly with Javascript, you can write a
+Sammy handler directly, you can write a customized backbone view, you are not limited to working
+within Roweis.</li>
+</ol>
+
+<h2>What do I need to know to use Roweis?</h2>
+
+<p>A full description and tutorial is outside of the scope of this document, however here are a few key points:</p>
+
+<ol>
+<li>Roweis is a client-side Javascript library. You must be familiar with "The Good Parts" of Javascript
+and of the architecture of <a href="http://itsnat.sourceforge.net/php/spim/spi_manifesto_en.php">Single Page Interface</a> 
+applications.</li>
+<li>Roweis has hard dependencies on <a href="http://code.quirkey.com/sammy/index.html">Sammy</a>,
+<a href="http://jquery.com/">jQuery</a>, and <a href="http://documentcloud.github.com/underscore/">Underscore</a>. You must have these
+evaluated prior to evaluating <code>sammy.roweis.js</code>.</li>
+<li>It is not necessary to use or understand <code>underscore.js</code>, just to evaluate it so that Roweis can use it.
+But as long as Roweis requries it, why not learn how to use it effectively?</li>
+<li>There are a number of declarations in Roweis that involve the use of jQuery selectors. The more expertise
+you have with jQuery, the easier it will be to use Roweis.</li>
+<li>Roweis rests on top of Sammy's micro-framework. You absolutely, positively, <strong>must</strong> understand and embrace
+Sammy's model of routes and handler functions to use Roweis.</li>
+<li>If you choose to install <a href="http://osteele.com/sources/javascript/functional/">Functional Javascript's</a>
+<code>to-function.js</code>, Roweis will let you use a string wherever a function is normally expected. Roweis works just fine
+without <code>to-function.js</code> if you don't care to use it.</li>
+</ol>
+
+<h2>Sammy + Roweis !== MVC</h2>
+
+<p>First, we should be clear what we mean when we talk about <a href="http://en.wikipedia.org/wiki/Model%E2%80%93View%E2%80%93Controller">MVC</a>.</p>
+
+<p>Our perspective is that out of the Box, Sammy does not provide MVC. Sammy works on a request-reponse model just like
+Sinatra or Rails. This is useful when your application has certain obvious destinations that ought to be bookmarkable
+and when your application ought to do sensible things when you click the back button.</p>
+
+<p>Sammy's model is therefore <a href="https://github.com/raganwald/homoiconic/blob/master/2010/10/vc_without_m.md#readme">(¬M)VC</a>.
+There are no models, and therefore nothing for views to observe for changes. Instead, there are controllers in the
+form of request handlers, and views in the form of templates or partials. Once a partial has been displayed, Javascript
+events can be wired up from DOM nodes to to Sammy actions, again without a model to mediate.</p>
+
+<p>In the simplest case, Roweis follows this exact model. Roweis simply provides a declarative way to produce the exact
+same architecture that Sammy supports. In Roweis you declare routes and partials, and you also get to declare
+how Roweis sets up the locals for the partials to display.</p>
+
+<h2>Sammy + Roweis + Backbone === MVC</h2>
+
+<p>It is not necessary to include <a href="http://documentcloud.github.com/backbone/">Backbone.js</a> to use Roweis. However,
+if you wish to introduce a full MVC model into your application, Roweis has direct support for backbone. (To be precise,
+we think of backbone as providing a <a href="https://github.com/raganwald/homoiconic/blob/master/2010/10/vc_without_m.md#readme">PVC</a> 
+architecture, but this is quibbling.)</p>
+
+<p>Although you can build a wondeful application integrating Sammy directly with Backbone, we choose to use Roweis because
+it still provides a declarative format for defining your application's presentation that continues to make simple things
+easy.</p>             </td>             <td class="code">               <div class="highlight"><pre>  </pre></div>             </td>           </tr>                               <tr id="section-3">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-3">#</a>               </div>               <h2>Handler Steps</h2>
+
+<p>Roweis takes a configuration hash and produces a function that is bound
+to Sammy's route handling API (there are also some other ways to invoke a Roweis handler that will be explained below).</p>
+
+<p>Sammy wants a function, and Roweis composes a function from a list of smaller functions
+ called 'steps'. It is very possible to declare what you want your handler to do during any of the steps:</p>
+
+<pre><code>.display('bar', {
+  fetch_data: function (data) {
+    data.home_page = 'http://reginald.braythwayt.com';
+  },
+  partial: '/blitz'
+});
+</code></pre>
+
+<p>But the real meat of what Roweis does is to write the steps for you based on other,
+seemingly arbitrary declarations you write. For example, you could write:</p>
+
+<pre><code>.display('bar', {
+  display: function (context, data, callback) {
+    context.partial('/blitz.haml', callback);
+  }
+});
+</code></pre>
+
+<p>But Roweis provides a super-simple shortcut for this common operation:</p>
+
+<pre><code>.display('bar', {
+  partial: '/blitz'
+});
+</code></pre>
+
+<p>Behind the scenes, Roweis writes the longer function for you, using one or more of certain default steps:
+<code>get_params</code>, <code>fetch_data</code>, <code>munge_data</code>, <code>display</code>, and <code>redirect</code>.</p>
+
+<p>(It is possible to define a different list of steps for certain advanced purposes with your application,
+and there is also support for lightweight aspect-oriented programming by writing things like
+<code>before_display</code>.)</p>             </td>             <td class="code">               <div class="highlight"><pre>  </pre></div>             </td>           </tr>                               <tr id="section-4">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-4">#</a>               </div>               <p>When Roweis writes a handler, it follows a series of steps, and each has a name. The default steps
+are listed here. The rest of the code you will see is oriented around writing functions for one or more of these
+steps and composing them together:</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">default_step_names</span> <span class="o">=</span> <span class="p">[</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-5">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-5">#</a>               </div>               <p>Inspects the element associated with a handler and infers parameters from it. This is typically
+not used, as parameters are usually obtained from a <code>GET</code> or <code>POST</code> bythe browser and injected
+into <code>context.params</code> automatically by Sammy.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="s1">&#39;get_params&#39;</span><span class="p">,</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-6">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-6">#</a>               </div>               <p>Performs an action, and as a side-effect initializes the <code>data</code> parameter for all subsequent
+steps to contains ome sort of action result.</p>
+
+<p>Roughly speaking, Roweis handlers either primarily dispolay something or primarily perfom 
+an action that changes the applicatrion's state. Those that primarily display things usually
+perform some sort of query during their <code>fetch_data</code> step, such as sending a <code>GET</code>
+request to a server and putting the result inhto <code>data. Those that primarily perfom an 
+action usually</code>POST<code>a resource to a server and place the result into</code>data`.</p>
+
+<p>Besides defining <code>fetch_data</code> directly, you can use one of the short-cut methods
+<code>gets</code>, <code>posts</code>, <code>puts</code>, or <code>deletes</code> to write this step.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="s1">&#39;fetch_data&#39;</span><span class="p">,</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-7">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-7">#</a>               </div>               <p>Transforms or "maps" the data from one form to another. Useful when a server
+provides data in an idiosyncratic or inconvenient form. For example, if a server
+is returning a list of models as an array, you can use <code>munge_data</code> as a convenient
+place to transform <code>data.model_list</code> from <code>[model_1, model_2, ... model_n]</code> to
+<code>{ models: [model_1, model_2, ... model_n] }</code>, which would make it easier to integrate
+with Backbone.js</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="s1">&#39;munge_data&#39;</span><span class="p">,</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-8">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-8">#</a>               </div>               <p>Displays something by manipulating the page's DOM. You can write your own function to do
+anything you want, but in practice this step usually renders the <code>data</code> as locals in a
+partial.</p>
+
+<p>If you are using Backbone, this step can also be used to instantiate a Backbone view and
+then tell the view to <code>.render()</code> itself.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="s1">&#39;display&#39;</span><span class="p">,</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-9">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-9">#</a>               </div>               <p>Tells the browser to change the location, invoking another action. The default behaviour 
+uses Sammy's <code>HashLocationProxy</code> to change the hash (and thus the location for the purposes 
+of bookmarking and the back button), however Sammy can be configured to use a different
+proxy, in which case a different handler will be invoked but the browser's location will
+not change.</p>
+
+<p>Typically, a handler either displays or redirects but not both. For that reason, there are 
+two different convenience methods for declaring a handler: <code>.display(...)</code> declares a
+handler that by default displays a partial and does not perform a redirection, and
+<code>.action(...)</code> declares a handler that by default does not display anything but does
+perform a redirection.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="s1">&#39;redirect&#39;</span></pre></div>             </td>           </tr>                               <tr id="section-10">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-10">#</a>               </div>                            </td>             <td class="code">               <div class="highlight"><pre>  <span class="p">];</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-11">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-11">#</a>               </div>               <h2>The Sammy.Roweis Plugin</h2>             </td>             <td class="code">               <div class="highlight"><pre>  </pre></div>             </td>           </tr>                               <tr id="section-12">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-12">#</a>               </div>               <p>Establish a scope. Sammy supports writing multiple Sammy applications
+simultaneously within what appears to be a single browser "application."</p>
+
+<p>The helpers above are constant across all such applications, whereas the variables declared
+in this scope are specific to each Sammy application. </p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="nx">Sammy</span><span class="p">.</span><span class="nx">Roweis</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-13">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-13">#</a>               </div>               <p>Most plugins are constant: You write something like:</p>
+
+<pre><code>$.sammy('.body', function() {
+  this.use(Sammy.SomePlugin);
+});
+</code></pre>
+
+<p>And you when you call<code>.use(...)</code>, you are passing in a constant value.</p>
+
+<p>Roweis is a dynamic plugin. Instead of calling <code>.use(Sammy.Roweis)</code>
+and passing in a constant plugin, Sammy.Roweis is actually a function
+that returns a plugin, with certain application defaults set according to the
+parameters you pass. For example:</p>
+
+<pre><code>$.sammy('.body', function() {
+  this.use(Sammy.Roweis('MyApp', { 
+    partial_root: 'partials' 
+  }));
+});
+</code></pre>
+
+<p>This establishes that your application is called "MyApp" and that by default,
+the root path for its partials is <code>./partials</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="kd">var</span> <span class="nx">sammy_dot_roweis</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">app_name</span><span class="p">,</span> <span class="nx">optional_options</span><span class="p">)</span> <span class="p">{</span>
+      <span class="cm">/*TODO: Merge scope functionality with application default functionality*/</span>
+  
+      <span class="nx">app_name</span> <span class="o">=</span> <span class="nx">app_name</span> <span class="o">||</span> <span class="s1">&#39;app&#39;</span><span class="p">;</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-14">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-14">#</a>               </div>               <h2>So-called "Macros"</h2>
+
+<p>The following 'macros' write handler steps for you. Each one is a single
+config property and a function that takes a handler and the value of that config property.
+if you supply a value for that property, the 'macro' function will be invoked
+and is expected to perturb the handler as a side-effect.</p>
+
+<p>Naturally, you can write your own macros. You can define them across your application:</p>
+
+<pre><code>$.sammy('.body', function() {
+  this.use(Sammy.Roweis('MyApp', { 
+    macros: {
+      part_number: function (handler, num) { ... }
+    },
+    ...
+  }));
+});
+</code></pre>
+
+<p>And thereafter, use them in your declarations:</p>
+
+<pre><code>Sammy.Roweis.MyApp
+  .action(
+    route: '/increase_inventory',
+    part_number: 42,
+  );
+</code></pre>
+
+<p>The macros listed here are the defaults built into Roweis.</p>
+
+<p>p.s. Yes, 'macro' is an improper term. The longer and more precise expression
+is 'a function-writing-function', which is a kind of Higher Order Function ("HOF").</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="kd">var</span> <span class="nx">default_macros</span> <span class="o">=</span> <span class="p">{</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-15">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-15">#</a>               </div>               <p><strong>Display</strong></p>
+
+<p>The <code>partial</code> macro writes a <code>display</code> step that uses a tenplate of
+some type (e.g. Haml) to display the <code>data</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">partial</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">handler</span><span class="p">,</span> <span class="nx">partial_value</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">display</span><span class="p">,</span>
+            <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+              <span class="k">if</span> <span class="p">(</span><span class="kc">false</span><span class="p">)</span> <span class="nx">Sammy</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s1">&#39; starting to render&#39;</span><span class="p">,</span><span class="nx">context</span><span class="p">,</span><span class="nx">data</span><span class="p">);</span>
+              <span class="kd">var</span> <span class="nx">local_data</span> <span class="o">=</span> <span class="nx">_meld</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="p">{</span>
+                <span class="nx">params</span><span class="o">:</span> <span class="nx">context</span><span class="p">.</span><span class="nx">params</span>
+              <span class="p">});</span>
+              <span class="k">if</span> <span class="p">(</span><span class="kc">false</span><span class="p">)</span> <span class="nx">Sammy</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s1">&#39; is rendering &#39;</span> <span class="o">+</span> <span class="nx">partial_value</span> <span class="o">+</span> <span class="s1">&#39; with:\n&#39;</span><span class="p">,</span> <span class="nx">local_data</span><span class="p">);</span>
+              <span class="kd">var</span> <span class="nx">render_context</span> <span class="o">=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="nx">partial_value</span><span class="p">,</span> <span class="nx">local_data</span><span class="p">);</span>
+              <span class="kd">var</span> <span class="nx">dom_is_dirty</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+              <span class="k">if</span> <span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">updates</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">renders</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">appends_to</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">render_context</span>
+                  <span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">updates</span><span class="p">);</span>
+                <span class="nx">dom_is_dirty</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+              <span class="p">}</span>
+              <span class="k">if</span> <span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">appends_to</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">append_fn</span> <span class="o">=</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">appends_to</span><span class="p">))</span> <span class="o">?</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">appends_to</span> <span class="o">:</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">appends_to</span><span class="p">;</span> <span class="p">})</span>
+                <span class="kd">var</span> <span class="nx">selector</span> <span class="o">=</span> <span class="nx">append_fn</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span> 
+                <span class="nx">render_context</span>
+                  <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">content</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">$</span><span class="p">(</span><span class="nx">selector</span><span class="p">)</span>
+                      <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">content</span><span class="p">);</span>
+                  <span class="p">});</span>
+                <span class="nx">dom_is_dirty</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+              <span class="p">}</span>
+              <span class="k">if</span> <span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">renders</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">||</span> <span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">=</span> <span class="p">{});</span>
+                <span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">renders</span> <span class="o">||</span> <span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">renders</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">renders</span><span class="p">))</span>
+                <span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">renders</span>
+                  <span class="p">.</span><span class="nx">ergo</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">el</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">render_context</span>
+                      <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">content</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="nx">el</span>
+                          <span class="p">.</span><span class="nx">empty</span><span class="p">()</span>
+                          <span class="p">.</span><span class="nx">append</span><span class="p">(</span><span class="nx">content</span><span class="p">)</span>
+                          <span class="p">;</span>
+                      <span class="p">});</span>
+                    <span class="nx">dom_is_dirty</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+                  <span class="p">})</span>
+                  <span class="p">;</span>
+              <span class="p">}</span>
+              <span class="cm">/*TODO: Fix app to use paramaterized selectors*/</span>
+              <span class="k">if</span> <span class="p">(</span><span class="nx">dom_is_dirty</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="kc">false</span><span class="p">)</span> <span class="nx">Sammy</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s1">&#39; is queuing up an display event&#39;</span><span class="p">);</span>
+                <span class="nx">render_context</span>
+                  <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">content</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">handler</span><span class="p">.</span><span class="nx">app</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="s1">&#39;after_display&#39;</span><span class="p">,</span> <span class="nx">data</span><span class="p">.</span><span class="nx">params</span><span class="p">);</span>
+                  <span class="p">})</span>
+              <span class="p">}</span>
+              <span class="nx">render_context</span>
+                <span class="p">.</span><span class="nx">then</span><span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">content</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="nx">callback</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+                <span class="p">})</span>
+            <span class="p">}</span>
+          <span class="p">);</span>
+        <span class="p">},</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-16">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-16">#</a>               </div>               <p>A simple macro for defining a redirection instead of a partial</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">redirects_to</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">handler</span><span class="p">,</span> <span class="nx">redirection_value</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">redirect</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">redirect</span><span class="p">,</span>
+            <span class="kd">function</span> <span class="p">(</span><span class="nx">redirect_context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+              <span class="kd">var</span> <span class="nx">path</span> <span class="o">=</span> <span class="nx">_internal_interpolate</span><span class="p">(</span><span class="nx">redirection_value</span><span class="p">,</span> <span class="nx">redirect_context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+              <span class="nx">handler</span><span class="p">.</span><span class="nx">app</span><span class="p">.</span><span class="nx">setLocation</span><span class="p">(</span><span class="nx">path</span><span class="p">);</span>
+              <span class="nx">callback</span><span class="p">(</span><span class="nx">redirect_context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+            <span class="p">}</span>
+          <span class="p">);</span>
+        <span class="p">},</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-17">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-17">#</a>               </div>               <p><strong>"Unobtrusive" Handlers</strong></p>
+
+<p>Many handlers are associated with a route. Some are associated with a DOM
+selector: They are invoked if an element matching their selector is put into
+the DOM by another display.</p>
+
+<p>The handlers are called <em>unobtrusive handlers</em>, and there are three key config
+parameters that control them:</p>
+
+<p>First, a selector must be provided with <code>renders</code>, such as <code>renders:
+'.customers.list'</code>. This selector is applied against the DOM, if any elements
+match, the unobtrusive handler is triggered. Whatever it displays through
+its partial will replace the contents of the selected element. <code>renders</code> is
+not a macro.</p>
+
+<p>Second, the typical style is to configure them with
+<code>route: false</code> to make sure that they cannot be invoked from setting the
+location hash. <code>route</code> isn't a macro either.</p>
+
+<p>Third, there is a very limited facility for parameterizing an unobtrusive
+handler by extracting parameters from the element's <code>id</code> and/or CSS classes,
+using the <code>infers</code> macro. <code>infers</code> writes a handler step that examines the
+<code>id</code> and <code>class</code> attributes of the handlers <code>$element()</code> to infer parameters.</p>
+
+<p>Nota Bene: <code>MATCHER.lastIndex</code> needs to be explicitly set because IE will maintain the index unless NULL is returned,
+which means that with two consecutive routes that contain params, the second set 
+of params will not be found and end up in splat instead of params. Explanation
+<a href="https://developer.mozilla.org/en/Core_JavaScript_1.5_Reference/Global_Objects/RegExp/lastIndex">here</a>.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">infers</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">handler</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">MATCHER</span> <span class="o">=</span> <span class="sr">/:([\w\d]+)/g</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">REPLACER</span> <span class="o">=</span> <span class="s2">&quot;(.+)&quot;</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">inferences</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isArray</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="o">?</span> <span class="nx">value</span> <span class="o">:</span> <span class="p">[</span><span class="nx">value</span><span class="p">];</span>
+            <span class="kd">var</span> <span class="nx">inferer</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">foldl</span><span class="p">(</span><span class="nx">inferences</span><span class="p">,</span>
+              <span class="kd">function</span> <span class="p">(</span><span class="nx">fn</span><span class="p">,</span> <span class="nx">inference</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">MATCHER</span><span class="p">.</span><span class="nx">lastIndex</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">param_names</span> <span class="o">=</span> <span class="p">[];</span>
+                <span class="k">while</span> <span class="p">((</span><span class="nx">inference_match</span> <span class="o">=</span> <span class="nx">MATCHER</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">inference</span><span class="p">))</span> <span class="o">!==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="nx">param_names</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">inference_match</span><span class="p">[</span><span class="mi">1</span><span class="p">]);</span>
+                <span class="p">}</span>
+                <span class="kd">var</span> <span class="nx">inference_regexp</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">RegExp</span><span class="p">(</span><span class="s2">&quot;^&quot;</span> <span class="o">+</span> <span class="nx">inference</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="nx">MATCHER</span><span class="p">,</span> <span class="nx">REPLACER</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;$&quot;</span><span class="p">);</span>
+                <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">attr</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="kd">var</span> <span class="nx">bindings</span> <span class="o">=</span> <span class="nx">fn</span><span class="p">(</span><span class="nx">attr</span><span class="p">);</span>
+                  <span class="k">if</span> <span class="p">((</span><span class="nx">attr_match</span> <span class="o">=</span> <span class="nx">inference_regexp</span><span class="p">.</span><span class="nx">exec</span><span class="p">(</span><span class="nx">attr</span><span class="p">))</span> <span class="o">!==</span> <span class="kc">null</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="nx">attr_match</span><span class="p">.</span><span class="nx">shift</span><span class="p">();</span>
+                    <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">attr_match</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="nx">index</span><span class="p">)</span> <span class="p">{</span>
+                      <span class="kd">var</span> <span class="nx">name</span> <span class="o">=</span> <span class="nx">param_names</span><span class="p">[</span><span class="nx">index</span><span class="p">];</span>
+                      <span class="nx">bindings</span><span class="p">[</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">value</span><span class="p">;</span>
+                    <span class="p">});</span>
+                  <span class="p">}</span>
+                  <span class="k">return</span> <span class="nx">bindings</span><span class="p">;</span>
+                <span class="p">};</span>
+              <span class="p">},</span>
+              <span class="kd">function</span> <span class="p">(</span><span class="nx">attr</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="p">{};</span> <span class="p">}</span>
+            <span class="p">);</span>
+            <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">get_params</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">get_params</span><span class="p">,</span> 
+              <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">el</span> <span class="o">=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">$element</span><span class="p">();</span>
+                <span class="kd">var</span> <span class="nx">attrs</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">map</span><span class="p">(</span><span class="nx">el</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;class&#39;</span><span class="p">).</span><span class="nx">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">),</span> <span class="s2">&quot;&#39;\.&#39; + _&quot;</span><span class="p">.</span><span class="nx">lambda</span><span class="p">());</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!!</span><span class="nx">el</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">))</span> <span class="p">{</span>
+                  <span class="nx">attrs</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span> <span class="s1">&#39;#&#39;</span> <span class="o">+</span> <span class="nx">el</span><span class="p">.</span><span class="nx">attr</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">)</span> <span class="p">);</span>
+                <span class="p">}</span>
+                <span class="kd">var</span> <span class="nx">inferred_bindings</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">foldl</span><span class="p">(</span><span class="nx">attrs</span><span class="p">,</span> 
+                  <span class="kd">function</span> <span class="p">(</span><span class="nx">bindings</span><span class="p">,</span> <span class="nx">attr</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">return</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="nx">bindings</span><span class="p">,</span> <span class="nx">inferer</span><span class="p">(</span><span class="nx">attr</span><span class="p">));</span>
+                  <span class="p">},</span>
+                  <span class="p">{}</span>
+                <span class="p">);</span>
+                <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="nx">context</span><span class="p">.</span><span class="nx">params</span> <span class="o">||</span> <span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">params</span> <span class="o">=</span> <span class="p">{}),</span> <span class="nx">inferred_bindings</span><span class="p">);</span>
+              <span class="p">}</span>
+            <span class="p">);</span>
+            <span class="k">return</span> <span class="nx">handler</span><span class="p">;</span>
+          <span class="p">}</span>
+          
+        <span class="p">},</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-18">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-18">#</a>               </div>               <p><code>map</code> abbreviates a mapping function to make it super-easy to write, and also throws
+in support for the author's pet (and shamefully incomplete) utility, cartography.js</p>
+
+<p>rather than in Roweis itself*</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">map</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">handler</span><span class="p">,</span> <span class="nx">map_value</span><span class="p">)</span> <span class="p">{</span>
+          <span class="cm">/*TODO: If this survives into production use, move it into an app-specific macro*/</span>
+          
+          <span class="kd">var</span> <span class="nx">config_map_fn</span><span class="p">;</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">map_value</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">config_map_fn</span> <span class="o">=</span> <span class="nx">map_value</span><span class="p">;</span>
+          <span class="p">}</span>
+          <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">map_value</span><span class="p">.</span><span class="nx">toFunction</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">config_map_fn</span> <span class="o">=</span> <span class="nx">map_value</span><span class="p">.</span><span class="nx">toFunction</span><span class="p">();</span>
+          <span class="p">}</span>
+          <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;undefined&#39;</span> <span class="o">!==</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">Cartography</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">config_map_fn</span> <span class="o">=</span> <span class="nx">Cartography</span><span class="p">.</span><span class="nx">compile</span><span class="p">(</span><span class="nx">map_value</span><span class="p">);</span>
+          <span class="p">}</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">config_map_fn</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">munge_data</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">munge_data</span><span class="p">,</span>
+              <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">config_map_fn</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">data</span><span class="p">));</span>
+              <span class="p">}</span>
+            <span class="p">);</span>
+          <span class="p">}</span>
+        <span class="p">},</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-19">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-19">#</a>               </div>               <p><strong>Backbone.js</strong></p>
+
+<p>If you install <code>backbone.js</code>, you can then define Roweis handlers that display a
+backbone view.  The style is to define the view in a separate class, and you tell
+Roweis to use it with a <code>backbone</code> declaration, something like:</p>
+
+<pre><code>app.display('my_view_handler', {
+  route: '/fubar',
+  backbone: {
+    clazz: MyBackboneViewClazz,
+    model: a_function_returning_a_model_for_the_view
+  }
+});
+</code></pre>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">backbone</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">handler</span><span class="p">,</span> <span class="nx">backbone_definition</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">(</span><span class="nx">Backbone</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">Sammy</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Error: You must install backbone.js&#39;</span><span class="p">);</span>
+          <span class="p">}</span>
+          <span class="kd">var</span> <span class="nx">declares_a_render_method</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">view_clazz</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="p">(</span><span class="nx">view_clazz</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">render</span> <span class="o">!==</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">render</span><span class="p">);</span>
+          <span class="p">};</span>
+          
+          <span class="kd">var</span> <span class="nx">clazz</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">;</span> <span class="c1">// default</span>
+          <span class="kd">var</span> <span class="nx">model</span><span class="p">;</span>
+        
+          <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">backbone_definition</span><span class="p">.</span><span class="nx">clazz</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">clazz</span> <span class="o">=</span> <span class="nx">backbone_definition</span><span class="p">.</span><span class="nx">clazz</span><span class="p">;</span>
+          <span class="p">}</span>
+          <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">backbone_definition</span><span class="p">.</span><span class="nx">clazz</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">clazz</span> <span class="o">=</span> <span class="nx">Backbone</span><span class="p">.</span><span class="nx">View</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="nx">backbone_definition</span><span class="p">.</span><span class="nx">clazz</span><span class="p">);</span> <span class="c1">// define extensions on the fly</span>
+          <span class="p">}</span>
+          
+          <span class="k">if</span> <span class="p">(</span><span class="nx">backbone_definition</span><span class="p">.</span><span class="nx">model</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">model</span> <span class="o">=</span> <span class="nx">backbone_definition</span><span class="p">.</span><span class="nx">model</span><span class="p">;</span>
+          <span class="p">}</span>
+          </pre></div>             </td>           </tr>                               <tr id="section-20">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-20">#</a>               </div>               <p>The parameters for the view constructor are limited to <code>model</code> if
+you supply a model or model function, and <code>el</code>, which is inferred
+from Roweis and Sammy.</p>             </td>             <td class="code">               <div class="highlight"><pre>          <span class="kd">var</span> <span class="nx">view_constructor_parameters_fn</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">hash</span> <span class="o">=</span> <span class="p">{};</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">model</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">1</span> <span class="o">===</span> <span class="nx">model</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+              <span class="nx">hash</span><span class="p">.</span><span class="nx">model</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">model</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="mi">2</span> <span class="o">===</span> <span class="nx">model</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+              <span class="nx">hash</span><span class="p">.</span><span class="nx">model</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">model</span> <span class="o">&amp;&amp;</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">model</span><span class="p">.</span><span class="nx">toFunction</span><span class="p">))</span> <span class="p">{</span>
+              <span class="kd">var</span> <span class="nx">fn</span> <span class="o">=</span> <span class="nx">model</span><span class="p">.</span><span class="nx">toFunction</span><span class="p">();</span>
+              <span class="k">if</span> <span class="p">(</span><span class="mi">1</span> <span class="o">===</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">hash</span><span class="p">.</span><span class="nx">model</span> <span class="o">=</span> <span class="nx">fn</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+              <span class="p">}</span>
+              <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="mi">2</span> <span class="o">===</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">hash</span><span class="p">.</span><span class="nx">model</span> <span class="o">=</span> <span class="nx">fn</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+            
+            <span class="k">if</span> <span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">renders</span><span class="p">)</span> <span class="p">{</span>
+              <span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">||</span> <span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">=</span> <span class="p">{});</span>
+              <span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">renders</span> <span class="o">||</span> <span class="p">(</span><span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">renders</span> <span class="o">=</span> <span class="nx">$</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">renders</span><span class="p">));</span>
+              <span class="nx">hash</span><span class="p">.</span><span class="nx">el</span> <span class="o">=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">renders</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nx">hash</span><span class="p">;</span>
+          <span class="p">};</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-21">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-21">#</a>               </div>               <p>this is what Roweis would do if there was no backbone view involved</p>             </td>             <td class="code">               <div class="highlight"><pre>          <span class="kd">var</span> <span class="nx">old_declared_roweis_render_fn</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">display</span> <span class="o">||</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{};</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-22">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-22">#</a>               </div>               <p>now write a new function</p>             </td>             <td class="code">               <div class="highlight"><pre>          <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">display</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-23">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-23">#</a>               </div>               <p>that initializes the parameters for the backbone view</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="kd">var</span> <span class="nx">view_constructor_parameters</span> <span class="o">=</span> <span class="nx">view_constructor_parameters_fn</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+          </pre></div>             </td>           </tr>                               <tr id="section-24">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-24">#</a>               </div>               <p>and extracts locals for rendering</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="kd">var</span> <span class="nx">locals</span> <span class="o">=</span> <span class="nx">view_constructor_parameters</span><span class="p">.</span><span class="nx">model</span> <span class="o">||</span> <span class="nx">data</span><span class="p">;</span>
+          </pre></div>             </td>           </tr>                               <tr id="section-25">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-25">#</a>               </div>               <p>and that extends the view clazz</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="kd">var</span> <span class="nx">extended_view_clazz</span> <span class="o">=</span> <span class="nx">clazz</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+              </pre></div>             </td>           </tr>                               <tr id="section-26">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-26">#</a>               </div>               <p>with a method that invokes the roweis display function. this is handy
+because you can write your own render function that does some stuff before or
+after or around Roweis' own render function.</p>
+
+<p>A common case is doing a bunch of JS in the view after letting Roweis handle the
+display.</p>             </td>             <td class="code">               <div class="highlight"><pre>              <span class="nx">roweis</span><span class="o">:</span> <span class="p">{</span>
+                <span class="cm">/*TODO: Implement `before_render` and `after_render`*/</span>
+                <span class="nx">render</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">optional_callback</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="nx">old_declared_roweis_render_fn</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">locals</span><span class="p">,</span> <span class="nx">optional_callback</span> <span class="o">||</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{}));</span>
+                  <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+            
+              <span class="nx">render</span><span class="o">:</span> <span class="nx">declares_a_render_method</span><span class="p">(</span><span class="nx">clazz</span><span class="p">)</span> <span class="o">?</span> <span class="nx">clazz</span><span class="p">.</span><span class="nx">prototype</span><span class="p">.</span><span class="nx">render</span> <span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="k">this</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span> <span class="p">}</span>
+            
+            <span class="p">});</span>
+          </pre></div>             </td>           </tr>                               <tr id="section-27">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-27">#</a>               </div>               <p>now create an instance of the view</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="kd">var</span> <span class="nx">view_instance</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">extended_view_clazz</span><span class="p">(</span><span class="nx">view_constructor_parameters</span><span class="p">);</span>
+          </pre></div>             </td>           </tr>                               <tr id="section-28">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-28">#</a>               </div>               <p>and tell it to render itself</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="nx">view_instance</span><span class="p">.</span><span class="nx">render</span><span class="p">();</span>
+          
+          <span class="p">};</span>
+        <span class="p">}</span>
+        
+      <span class="p">}</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-29">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-29">#</a>               </div>               <p>This code writes one macro for each verb. Thus, when you write something like
+<code>posts: '/fu/bar'</code>, Roweis turns this into a function that does and AJAX <code>POST</code>
+during the <code>fetch_data</code> step.</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">_verb_inflections</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">verb</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">default_macros</span><span class="p">[</span><span class="nx">verb</span><span class="p">]</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">handler</span><span class="p">,</span> <span class="nx">value</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">fetch_data_fn</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">destination</span><span class="p">,</span> <span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">server_route</span> <span class="o">=</span> <span class="nx">_internal_interpolate</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">context</span><span class="p">);</span>
+            <span class="kd">var</span> <span class="nx">host_partial_path</span> <span class="o">=</span> <span class="nx">server_route</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^\//</span><span class="p">)</span> <span class="o">?</span> <span class="nx">server_route</span> <span class="o">:</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="nx">server_route</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">full_url</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">host</span> <span class="o">+</span> <span class="nx">host_partial_path</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">actuals</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="nx">context</span><span class="p">.</span><span class="nx">params</span><span class="p">);</span>
+            <span class="k">delete</span> <span class="nx">actuals</span><span class="p">.</span><span class="nx">etc</span><span class="p">;</span>
+            <span class="kd">var</span> <span class="nx">ap</span> <span class="o">=</span> <span class="nx">actuals</span><span class="p">.</span><span class="nx">toHash</span><span class="p">();</span>
+            <span class="k">if</span> <span class="p">(</span><span class="kc">false</span><span class="p">)</span> <span class="nx">Sammy</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">config</span><span class="p">.</span><span class="nx">name</span> <span class="o">+</span> <span class="s1">&#39; is ajaxing &#39;</span> <span class="o">+</span> <span class="nx">full_url</span> <span class="o">+</span> <span class="s1">&#39; with:&#39;</span><span class="p">,</span> <span class="nx">ap</span><span class="p">);</span>
+            <span class="kd">var</span> <span class="nx">request_object</span> <span class="o">=</span> <span class="p">{</span>
+              <span class="nx">error</span><span class="o">:</span> <span class="kd">function</span><span class="p">(</span><span class="nx">xhr</span><span class="p">,</span> <span class="nx">textStatus</span><span class="p">,</span> <span class="nx">errorThrown</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">Sammy</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Error from &#39;</span><span class="o">+</span><span class="nx">full_url</span><span class="o">+</span><span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="nx">xhr</span><span class="p">);</span>
+                <span class="kd">var</span> <span class="nx">propagate</span> <span class="o">=</span> <span class="kc">true</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">code</span> <span class="o">=</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">status</span><span class="p">;</span>
+                <span class="kd">var</span> <span class="nx">responseObj</span><span class="p">;</span>
+                <span class="k">try</span> <span class="p">{</span>
+                  <span class="nx">responseObj</span> <span class="o">=</span> <span class="p">(</span><span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span> <span class="o">?</span> <span class="nx">JSON</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span><span class="p">)</span> <span class="o">:</span> <span class="p">{});</span>
+                <span class="p">}</span>
+                <span class="k">catch</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="nx">responseObj</span> <span class="o">=</span> <span class="p">(</span><span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span> <span class="o">?</span> <span class="p">{</span> <span class="nx">responseText</span><span class="o">:</span> <span class="nx">xhr</span><span class="p">.</span><span class="nx">responseText</span> <span class="p">}</span><span class="o">:</span> <span class="p">{});</span>
+                <span class="p">}</span>
+                <span class="kd">var</span> <span class="nx">error_params</span> <span class="o">=</span> <span class="p">{</span>
+                  <span class="nx">params</span><span class="o">:</span> <span class="nx">ap</span><span class="p">,</span>
+                  <span class="nx">code</span><span class="o">:</span> <span class="nx">code</span><span class="p">,</span>
+                  <span class="nx">handler</span><span class="o">:</span> <span class="nx">handler</span><span class="p">,</span>
+                  <span class="nx">context</span><span class="o">:</span> <span class="nx">context</span><span class="p">,</span>
+                  <span class="nx">data</span><span class="o">:</span> <span class="nx">data</span><span class="p">,</span>
+                  <span class="nx">xhr</span><span class="o">:</span> <span class="nx">xhr</span><span class="p">,</span>
+                  <span class="nx">response</span><span class="o">:</span> <span class="nx">responseObj</span><span class="p">,</span>
+                  <span class="nx">textStatus</span><span class="o">:</span> <span class="nx">textStatus</span><span class="p">,</span>
+                  <span class="nx">errorThrown</span><span class="o">:</span> <span class="nx">errorThrown</span><span class="p">,</span>
+                  <span class="nx">stopPropagation</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="nx">propagate</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span> <span class="p">},</span>
+                <span class="p">};</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">error_handlers</span><span class="p">[</span><span class="nx">code</span><span class="p">])</span> <span class="p">{</span>
+                  <span class="nx">handler</span><span class="p">.</span><span class="nx">error_handlers</span><span class="p">[</span><span class="nx">code</span><span class="p">](</span><span class="nx">error_params</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">propagate</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="nx">handler</span><span class="p">.</span><span class="nx">app</span><span class="p">.</span><span class="nx">trigger</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span> <span class="nx">error_params</span><span class="p">);</span>
+                <span class="p">}</span>
+              <span class="p">},</span>
+              <span class="nx">url</span><span class="o">:</span> <span class="nx">full_url</span><span class="p">,</span>
+              <span class="nx">type</span><span class="o">:</span> <span class="nx">_present_tense</span><span class="p">(</span><span class="nx">verb</span><span class="p">),</span>
+              <span class="nx">cache</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+              <span class="nx">etc</span><span class="o">:</span> <span class="p">{</span>
+                <span class="nx">handler</span><span class="o">:</span> <span class="nx">handler</span><span class="p">,</span>
+                <span class="nx">context</span><span class="o">:</span> <span class="nx">context</span>
+              <span class="p">},</span>
+              <span class="nx">data</span><span class="o">:</span> <span class="nx">ap</span><span class="p">,</span>
+              <span class="nx">success</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">data_from_server</span><span class="p">,</span> <span class="nx">textStatus</span><span class="p">,</span> <span class="nx">xhr</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">data</span> <span class="o">=</span> <span class="nx">data</span> <span class="o">||</span> <span class="p">{};</span>
+                <span class="nx">data</span><span class="p">.</span><span class="nx">params</span> <span class="o">=</span> <span class="nx">context</span><span class="p">.</span><span class="nx">params</span><span class="p">.</span><span class="nx">toHash</span><span class="p">();</span>
+                <span class="nx">data</span><span class="p">[</span><span class="nx">destination</span><span class="p">]</span> <span class="o">=</span> <span class="nx">data_from_server</span><span class="p">;</span>
+                <span class="nx">callback</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+              <span class="p">}</span>
+            <span class="p">};</span>
+            <span class="nx">$</span><span class="p">.</span><span class="nx">ajax</span><span class="p">(</span><span class="nx">request_object</span><span class="p">);</span>
+          <span class="p">};</span>
+          <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="o">===</span> <span class="s1">&#39;string&#39;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">fetch_data</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">fetch_data</span><span class="p">,</span>
+              <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">fetch_data_fn</span><span class="p">(</span><span class="nx">value</span><span class="p">,</span> <span class="s1">&#39;server_data&#39;</span><span class="p">,</span> <span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+              <span class="p">}</span>
+            <span class="p">);</span>
+          <span class="p">}</span>
+          <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="k">typeof</span><span class="p">(</span><span class="nx">value</span><span class="p">)</span> <span class="o">===</span> <span class="s1">&#39;object&#39;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">fetch_data</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">foldl</span><span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">value</span><span class="p">),</span>
+              <span class="kd">function</span> <span class="p">(</span><span class="nx">old_action</span><span class="p">,</span> <span class="nx">destination</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">old_action</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+                  <span class="nx">fetch_data_fn</span><span class="p">(</span><span class="nx">value</span><span class="p">[</span><span class="nx">destination</span><span class="p">],</span> <span class="nx">destination</span><span class="p">,</span> <span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+                <span class="p">});</span>
+              <span class="p">},</span>
+              <span class="nx">handler</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">.</span><span class="nx">fetch_data</span>
+            <span class="p">);</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">});</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-30">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-30">#</a>               </div>               <h2>Defining a New Handler</h2>             </td>             <td class="code">               <div class="highlight"><pre>      </pre></div>             </td>           </tr>                               <tr id="section-31">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-31">#</a>               </div>               <p>The generic function for defining a new handler from a configuration.</p>
+
+<p>This function is called by certain convenience methods we will add
+to Sammy's application object.</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="kd">var</span> <span class="nx">_define_handler</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">app</span><span class="p">,</span> <span class="nx">config</span><span class="p">)</span> <span class="p">{</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-32">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-32">#</a>               </div>               <p><strong>Construct the handler object</strong></p>
+
+<p>We are going to build a handler function and decorate it with a metric
+fuckload of attributes. Those might come in handy for adavcend instrocpection
+after the fact, and we have a pipe dream that handlers will be rewritten one day.
+but, one thing at a time.</p>
+
+<p>The extra attributes are namespaced under <code>roweis</code>, just in case
+we define something that clashes with some other property associated with functions.
+The most interesting attribute is <code>fn</code>, which is the function that actually does the
+handling of the function.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="kd">var</span> <span class="nx">handler</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span>
+          <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">fn</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+          <span class="p">},</span>
+          <span class="p">{</span>
+            <span class="nx">roweis</span><span class="o">:</span> <span class="p">{</span>
+              <span class="nx">fn</span><span class="o">:</span> <span class="nx">_noop</span><span class="p">,</span>
+              <span class="nx">app</span><span class="o">:</span> <span class="nx">app</span><span class="p">,</span>
+              <span class="nx">config</span><span class="o">:</span> <span class="nx">config</span><span class="p">,</span>
+              <span class="nx">step_names</span><span class="o">:</span> <span class="nx">app_options</span><span class="p">.</span><span class="nx">step_names</span><span class="p">,</span>
+              <span class="nx">step_functions</span><span class="o">:</span> <span class="p">{},</span>
+              <span class="nx">error_handlers</span><span class="o">:</span> <span class="p">{}</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">);</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-33">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-33">#</a>               </div>               <p><strong>Extract ajax error handlers</strong></p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">code</span> <span class="k">in</span> <span class="nx">config</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">code</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nb">isNaN</span><span class="p">(</span><span class="nx">code</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">error_handlers</span><span class="p">[</span><span class="nx">code</span><span class="p">]</span> <span class="o">=</span> <span class="nx">config</span><span class="p">[</span><span class="nx">code</span><span class="p">];</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-34">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-34">#</a>               </div>               <p><strong>Handler steps</strong></p>
+
+<p>By default, the handler has the same steps as the app, which has the default steps.
+They can be overridden at any level, including within a scope.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">if</span> <span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">step_names</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_names</span> <span class="o">=</span> <span class="nx">config</span><span class="p">.</span><span class="nx">step_names</span><span class="p">;</span>
+        <span class="p">}</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-35">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-35">#</a>               </div>               <p>Copy the named steps from the config to the handler</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_names</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">step_name</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">config</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]))</span> <span class="p">{</span>
+            <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">],</span> <span class="nx">config</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]);</span>
+          <span class="p">}</span>
+        <span class="p">});</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-36">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-36">#</a>               </div>               <p><strong>"Macro" Expansion</strong></p>
+
+<p>As described above, each "macro" is a property and a function
+that takes the handler and value of the property as parameters.</p>
+
+<p>It is expected to perturb the handler appropriately. This is where
+most of the handler's action steps get written. Some of them are going to
+be composed with steps written in config.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="kd">var</span> <span class="nx">macros_to_expand</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">default_macros</span><span class="p">,</span> <span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">macros</span> <span class="o">||</span> <span class="p">{},</span> <span class="nx">config</span><span class="p">.</span><span class="nx">macros</span> <span class="o">||</span> <span class="p">{});</span>
+        <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">keys</span><span class="p">(</span><span class="nx">macros_to_expand</span><span class="p">),</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">macro_key</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">value</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">config</span><span class="p">[</span><span class="nx">macro_key</span><span class="p">];</span>
+          <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nx">_</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">(</span><span class="nx">value</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">macros_to_expand</span><span class="p">[</span><span class="nx">macro_key</span><span class="p">](</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">,</span> <span class="nx">value</span><span class="p">);</span>
+          <span class="p">}</span>
+        <span class="p">});</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-37">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-37">#</a>               </div>               <p><strong>Aspect-Oriented Handlers</strong></p>
+
+<p>You can define a <code>before_</code> or <code>after_</code> function for each of the action steps,
+and Roweis will mix it into the step. You could write the whole
+thing yourself, but an advantage of this system is that you can let Roweis
+use convention to write the main step while you do additional customization
+with a <code>before_</code> or <code>after_</code> step. For example:</p>
+
+<pre><code>.display('bmx_bikes', {
+  gets: '/bikes/bmx/',
+  after_fetch_data: function (data) {
+    return { 
+      models: data.server_data, 
+      size: data.server_data.length
+    };
+  }
+});
+</code></pre>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_names</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">step_name</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">([</span><span class="s1">&#39;before_&#39;</span><span class="o">+</span><span class="nx">step_name</span><span class="p">,</span> <span class="s1">&#39;after_&#39;</span><span class="o">+</span><span class="nx">step_name</span><span class="p">],</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">expanded_step_name</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">config</span><span class="p">[</span><span class="nx">expanded_step_name</span><span class="p">]))</span> <span class="p">{</span>
+              <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">[</span><span class="nx">expanded_step_name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">[</span><span class="nx">expanded_step_name</span><span class="p">],</span> <span class="nx">config</span><span class="p">[</span><span class="nx">expanded_step_name</span><span class="p">]);</span>
+            <span class="p">}</span>
+          <span class="p">})</span>
+        <span class="p">});</span>
+        
+        <span class="nx">_</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_names</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">step_name</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]))</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">[</span><span class="s1">&#39;before_&#39;</span> <span class="o">+</span> <span class="nx">step_name</span><span class="p">]))</span> <span class="p">{</span>
+              <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">[</span><span class="s1">&#39;before_&#39;</span> <span class="o">+</span> <span class="nx">step_name</span><span class="p">],</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]);</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">[</span><span class="s1">&#39;after_&#39;</span> <span class="o">+</span> <span class="nx">step_name</span><span class="p">]))</span> <span class="p">{</span>
+              <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">_compose</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">],</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">[</span><span class="s1">&#39;after_&#39;</span> <span class="o">+</span> <span class="nx">step_name</span><span class="p">]);</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">});</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-38">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-38">#</a>               </div>               <p><strong>Composing the handler function</strong></p>
+
+<p>We compose <code>handler.roweis.fn</code> out of the individual
+step functions. <code>handler</code> delegates to this function, so
+in effect we are redefining <code>handler</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">fn</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">step_names_in_use</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">select</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_names</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">step_name</span><span class="p">)</span> <span class="p">{</span> 
+            <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]);</span> 
+          <span class="p">});</span>
+          
+          <span class="k">return</span>  <span class="nx">_</span><span class="p">.</span><span class="nx">foldr</span><span class="p">(</span><span class="nx">step_names_in_use</span><span class="p">,</span>
+            <span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">callback</span><span class="p">,</span> <span class="nx">step_name</span><span class="p">)</span> <span class="p">{</span>
+              <span class="kd">var</span> <span class="nx">callbackized_step_fn</span> <span class="o">=</span> <span class="nx">_callbackable</span><span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">step_functions</span><span class="p">[</span><span class="nx">step_name</span><span class="p">]);</span>
+              <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nx">callbackized_step_fn</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+              <span class="p">};</span>
+            <span class="p">}),</span> 
+            <span class="p">(</span><span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span> <span class="cm">/* nada */</span> <span class="p">})</span>
+          <span class="p">);</span>
+        <span class="p">})();</span>
+
+        <span class="k">return</span> <span class="nx">handler</span><span class="p">;</span>
+      
+      <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-39">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-39">#</a>               </div>               <p>The generic function for installing a new handler into its app. 
+It binds the object to the appropriate 
+<a href="http://code.quirkey.com/sammy/docs/events.html">Sammy events</a> so that the handler
+is invoked when the appropriate route (if any) is invoked or the appropriate 
+element is attached to the DOM.</p>
+
+<p>(It could be a method on <code>handler.roweis</code>, but the concept of re-installing
+a handler will have to wait for an architecture involing uninstalling a handler
+from any existing bindings. So for now, it's a helper function.)</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="kd">var</span> <span class="nx">_install_handler</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">handler</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">config</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">config</span><span class="p">;</span>
+        <span class="kd">var</span> <span class="nx">app</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">app</span><span class="p">;</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-40">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-40">#</a>               </div>               <p>triggering a handler through a route</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">if</span> <span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">method</span> <span class="o">&amp;&amp;</span> <span class="nx">config</span><span class="p">.</span><span class="nx">route</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">app</span><span class="p">[</span><span class="nx">config</span><span class="p">.</span><span class="nx">method</span><span class="p">](</span><span class="nx">config</span><span class="p">.</span><span class="nx">route</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">handler_context</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">handler</span><span class="p">(</span><span class="nx">handler_context</span><span class="p">,</span> <span class="p">{});</span>
+          <span class="p">});</span>
+        <span class="p">}</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-41">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-41">#</a>               </div>               <p>triggering a handler unobtrusively</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">if</span> <span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">renders</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">updater_fn</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">e</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span></pre></div>             </td>           </tr>                               <tr id="section-42">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-42">#</a>               </div>               <p>If the selector defined by the controller being bound matches the 
+data, we care about this and want to hear when it's done rendering</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="kd">var</span> <span class="nx">context</span> <span class="o">=</span> <span class="k">this</span><span class="p">;</span>
+            
+            <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">$</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">renders</span><span class="p">).</span><span class="nx">filter</span><span class="p">(</span><span class="s1">&#39;:not(.__URH__)&#39;</span><span class="p">),</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">index</span><span class="p">,</span> <span class="nx">dom_el</span><span class="p">)</span> <span class="p">{</span>
+              <span class="nx">$</span><span class="p">(</span><span class="nx">dom_el</span><span class="p">)</span>
+                <span class="p">.</span><span class="nx">addClass</span><span class="p">(</span><span class="s1">&#39;__URH__&#39;</span><span class="p">);</span>
+              <span class="nx">new_context</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="p">{},</span> <span class="nx">context</span><span class="p">,</span> <span class="p">{</span> <span class="nx">$element</span><span class="o">:</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">$</span><span class="p">(</span><span class="nx">dom_el</span><span class="p">);</span> <span class="p">}</span> <span class="p">});</span>
+              <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="nx">new_context</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">||</span> <span class="p">(</span><span class="nx">new_context</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">=</span> <span class="p">{}),</span> <span class="p">{</span> <span class="nx">renders</span><span class="o">:</span> <span class="nx">$</span><span class="p">(</span><span class="nx">dom_el</span><span class="p">)});</span>
+              <span class="nx">handler</span><span class="p">(</span><span class="nx">new_context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+            <span class="p">});</span>
+          <span class="p">};</span>
+          <span class="nx">app</span>
+            <span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="s1">&#39;after_display&#39;</span><span class="p">,</span> <span class="nx">updater_fn</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="s1">&#39;run&#39;</span><span class="p">,</span> <span class="nx">updater_fn</span><span class="p">);</span>
+        <span class="p">}</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-43">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-43">#</a>               </div>               <p>triggering a handler through an AJAX error status</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">if</span> <span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">code</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nb">isNaN</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">code</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">config</span><span class="p">.</span><span class="nx">route</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">app</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">code</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">error_data</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">app</span><span class="p">.</span><span class="nx">setInterpolatedLocation</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">route</span><span class="p">,</span> <span class="nx">error_data</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
+          <span class="p">})</span>
+        <span class="p">}</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-44">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-44">#</a>               </div>               <p>Add the handler to the application in the <code>.roweis</code> scope</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">handlers</span><span class="p">[</span><span class="nx">config</span><span class="p">.</span><span class="nx">name</span><span class="p">])</span> <span class="p">{</span>
+          <span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">handlers</span><span class="p">[</span><span class="nx">config</span><span class="p">.</span><span class="nx">name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">;</span>
+        <span class="p">}</span>
+        
+        <span class="k">return</span> <span class="nx">handler</span><span class="p">;</span>
+        
+      <span class="p">};</span></pre></div>             </td>           </tr>                               <tr id="section-45">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-45">#</a>               </div>               <p><strong>Base app options</strong></p>
+
+<p>These can be overridden when you invoke Roweis.</p>
+
+<p>(By default, if you are using the <code>Sammy.Haml</code> plugin, Roweis assumes
+that partials end in <code>.haml</code>.)</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="kd">var</span> <span class="nx">app_options</span> <span class="o">=</span> <span class="nx">_meld</span><span class="p">(</span>
+        <span class="cm">/*TODO: Support other defaults such as Moustache or handlebars*/</span>
+        <span class="p">{</span> 
+          <span class="nx">partial_suffix</span><span class="o">:</span> <span class="p">(</span><span class="nx">Sammy</span><span class="p">.</span><span class="nx">Haml</span> <span class="o">?</span> <span class="s1">&#39;.haml&#39;</span> <span class="o">:</span> <span class="s1">&#39;&#39;</span><span class="p">),</span>
+          <span class="nx">name</span><span class="o">:</span> <span class="nx">app_name</span><span class="p">,</span>
+          <span class="nx">step_names</span><span class="o">:</span> <span class="nx">default_step_names</span><span class="p">,</span>
+          <span class="nx">default_macros</span><span class="o">:</span> <span class="nx">default_macros</span><span class="p">,</span>
+          <span class="nx">error_handlers</span><span class="o">:</span> <span class="p">{}</span>
+        <span class="p">},</span>
+        <span class="nx">optional_options</span> <span class="o">||</span> <span class="p">{}</span>
+      <span class="p">);</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-46">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-46">#</a>               </div>               <h2>The Sammy.Roweis Plugin</h2>
+
+<p>This is the code that actually extends the Sammy application with additional
+methods for creating and managing scopes and for defining and installing handlers.
+When this function is called, we modify the sammy application to add
+Roweis's library functions.</p>             </td>             <td class="code">               <div class="highlight"><pre>      <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">app</span><span class="p">,</span> <span class="nx">host</span><span class="p">)</span> <span class="p">{</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-47">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-47">#</a>               </div>               <p><strong>Initializing the Sammy application</strong></p>             </td>             <td class="code">               <div class="highlight"><pre>      </pre></div>             </td>           </tr>                               <tr id="section-48">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-48">#</a>               </div>               <p>Add the app to Roweis's name space. This means you can break your
+declarations up into other files simply by writing something like:</p>
+
+<pre><code>Sammy.Roweis.MyApp
+  .display('products', { ... })
+  .display('customers', { ... })  
+  ;   
+</code></pre>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">sammy_dot_roweis</span><span class="p">[</span><span class="nx">app_name</span><span class="p">]</span> <span class="o">=</span> <span class="nx">app</span><span class="p">;</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-49">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-49">#</a>               </div>               <p>Extend the app with a lot of Roweis-specific properties. We confine most of it 
+into a <code>.roweis</code> namespace in the hope of minimizing the likelihood of a conflict with
+other plugins or with Sammy:</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">({</span>
+          <span class="nx">host</span><span class="o">:</span> <span class="nx">host</span> <span class="o">||</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+          <span class="nx">handlers</span><span class="o">:</span> <span class="p">[],</span>
+          <span class="nx">config_stack</span><span class="o">:</span> <span class="p">[],</span>
+          <span class="nx">macros</span><span class="o">:</span> <span class="p">{},</span>
+          <span class="nx">extended</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">config</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">out</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">foldl</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">config_stack</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">acc</span><span class="p">,</span><span class="nx">hash</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">jQuery</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="nx">acc</span><span class="p">,</span><span class="nx">hash</span><span class="p">);</span> <span class="p">},</span> <span class="nx">config</span><span class="p">);</span></pre></div>             </td>           </tr>                               <tr id="section-50">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-50">#</a>               </div>               <p>special case for properties with paths</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">prop</span> <span class="k">in</span> <span class="nx">out</span><span class="p">)</span> <span class="p">{</span>
+              <span class="k">if</span> <span class="p">(</span><span class="nx">out</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">prop</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">prop</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/_path$/</span><span class="p">))</span> <span class="p">{</span>
+                <span class="kd">var</span> <span class="nx">paths</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">compact</span><span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">pluck</span><span class="p">(</span><span class="k">this</span><span class="p">.</span><span class="nx">config_stack</span><span class="p">,</span> <span class="nx">prop</span><span class="p">));</span>
+                <span class="nx">out</span><span class="p">[</span><span class="nx">prop</span><span class="p">]</span> <span class="o">=</span> <span class="nx">paths</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">);</span>
+              <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nx">out</span><span class="p">;</span>
+          <span class="p">},</span>
+          <span class="nx">with_app_defaults</span><span class="o">:</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">config</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kd">var</span> <span class="nx">out</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="p">{},</span> <span class="nx">config</span><span class="p">);</span></pre></div>             </td>           </tr>                               <tr id="section-51">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-51">#</a>               </div>               <p><strong>Update config with application defaults</strong></p>             </td>             <td class="code">               <div class="highlight"><pre>        </pre></div>             </td>           </tr>                               <tr id="section-52">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-52">#</a>               </div>               <p>we will be passed configuration that has already been massaged by 
+<code>_mix_in_optional_parameters_and_conventions</code>, but there are a few
+more steps based on application defaults</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="k">if</span> <span class="p">(</span><span class="nx">out</span><span class="p">.</span><span class="nx">partial</span> <span class="o">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="nx">partial_suffix</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">out</span><span class="p">.</span><span class="nx">partial</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/\.[^\/]+$/</span><span class="p">))</span> <span class="p">{</span>
+              <span class="nx">out</span><span class="p">.</span><span class="nx">partial</span> <span class="o">=</span> <span class="nx">out</span><span class="p">.</span><span class="nx">partial</span> <span class="o">+</span> <span class="k">this</span><span class="p">.</span><span class="nx">partial_suffix</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">out</span><span class="p">.</span><span class="nx">partial</span> <span class="o">&amp;&amp;</span> <span class="k">this</span><span class="p">.</span><span class="nx">partial_root</span><span class="p">)</span> <span class="p">{</span>
+              <span class="nx">out</span><span class="p">.</span><span class="nx">partial</span> <span class="o">=</span> <span class="p">[</span><span class="k">this</span><span class="p">.</span><span class="nx">partial_root</span><span class="p">,</span> <span class="nx">out</span><span class="p">.</span><span class="nx">partial</span><span class="p">].</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">);</span>
+            <span class="p">}</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-53">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-53">#</a>               </div>               <p>and a default DOM selector to update</p>             </td>             <td class="code">               <div class="highlight"><pre>            <span class="k">if</span> <span class="p">(</span><span class="kc">undefined</span> <span class="o">===</span> <span class="nx">out</span><span class="p">.</span><span class="nx">updates</span><span class="p">)</span> <span class="p">{</span>
+              <span class="nx">out</span><span class="p">.</span><span class="nx">updates</span> <span class="o">=</span> <span class="nx">out</span><span class="p">.</span><span class="nx">renders</span> <span class="o">||</span> <span class="k">this</span><span class="p">.</span><span class="nx">root_element_selector</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="nx">out</span><span class="p">;</span>
+          <span class="p">}</span>
+        <span class="p">},</span> <span class="nx">app_options</span><span class="p">);</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-54">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-54">#</a>               </div>               <p>Sammy expects a jQuery element selector so that its default partial rendering
+will work smoothly. We'll add it now. We could do something a little more
+elegant with our default application options, but we want to respect
+Sammy's built-in way of registering the root element selector</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">root_element_selector</span> <span class="o">=</span> <span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">updates</span> <span class="o">||</span> <span class="nx">app</span><span class="p">.</span><span class="nx">element_selector</span> <span class="o">||</span> <span class="s1">&#39;body&#39;</span><span class="p">;</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-55">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-55">#</a>               </div>               <h2>Additonal methods added to every Sammy application</h2>             </td>             <td class="code">               <div class="highlight"><pre>        </pre></div>             </td>           </tr>                               <tr id="section-56">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-56">#</a>               </div>               <p><strong>Methods for defining and installing handlers</strong></p>             </td>             <td class="code">               <div class="highlight"><pre>        </pre></div>             </td>           </tr>                               <tr id="section-57">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-57">#</a>               </div>               <p>The core method for defining a new handler that renders something in the DOM.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="kd">var</span> <span class="nx">_display</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">optional_name</span><span class="p">,</span> <span class="nx">optional_config</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">_install_handler</span><span class="p">(</span>
+            <span class="nx">_define_handler</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> 
+              <span class="k">this</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">with_app_defaults</span><span class="p">(</span>
+                <span class="nx">_mix_in_optional_parameters_and_conventions</span><span class="p">(</span><span class="nx">optional_name</span><span class="p">,</span> <span class="nx">optional_config</span><span class="p">,</span> 
+                  <span class="k">this</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">extended</span><span class="p">({</span> 
+                    <span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;get&#39;</span><span class="p">,</span>
+                    <span class="nx">appends_to</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+                    <span class="nx">redirect</span><span class="o">:</span> <span class="kc">false</span> 
+                  <span class="p">})</span>
+                <span class="p">)</span>
+              <span class="p">)</span>
+            <span class="p">)</span>
+          <span class="p">);</span>
+          <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">};</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-58">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-58">#</a>               </div>               <p>The core method for defining a new handler that performs an action and then
+redirects to a display, a client-side implementation of the
+<a href="https://secure.wikimedia.org/wikipedia/en/wiki/Post/Redirect/Get">Post-Redirect-Get</a>
+("PRG") pattern.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="kd">var</span> <span class="nx">_action</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">optional_name</span><span class="p">,</span> <span class="nx">optional_config</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">_install_handler</span><span class="p">(</span>
+            <span class="nx">_define_handler</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> 
+              <span class="k">this</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">with_app_defaults</span><span class="p">(</span>
+                <span class="nx">_mix_in_optional_parameters_and_conventions</span><span class="p">(</span><span class="nx">optional_name</span><span class="p">,</span> <span class="nx">optional_config</span><span class="p">,</span> 
+                  <span class="k">this</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">extended</span><span class="p">({</span> 
+                    <span class="nx">method</span><span class="o">:</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> 
+                    <span class="nx">updates</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+                    <span class="nx">appends_to</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+                    <span class="nx">backbone</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+                    <span class="nx">partial</span><span class="o">:</span> <span class="kc">false</span>
+                  <span class="p">})</span>
+                <span class="p">)</span>
+              <span class="p">)</span>
+            <span class="p">)</span>
+          <span class="p">);</span>
+          <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">};</span>
+             </pre></div>             </td>           </tr>                               <tr id="section-59">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-59">#</a>               </div>               <p><strong>Methods for establishing scopes</strong></p>
+
+<p>In Roweis, scopes establish tenmporary defaults. A simple
+case might be something like this:</p>
+
+<pre><code>app
+  .begin({ 
+    gets_home_path: '/bikes',
+    partial_home_path: 'bikes'
+  })
+    .display({
+      gets: '',
+      partial: 'plural'
+    })
+    .display({
+      gets: ':part_number',
+      partial: 'singular'
+    })
+    .end()
+  ;
+</code></pre>
+
+<p><code>begin</code> establishes a scope and <code>end</code> ends it. Within the scope,
+<code>gets</code> has a home path, so our two faux-pages get their data from the
+server using <code>GET /bikes</code> and <code>GET /bikes/42</code>. Likewise, there is a home
+path for partials, so the partials used to display our faux pages will
+be <code>/bikes/plural.haml</code> and <code>/bikes/singular.haml</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre>        
+        <span class="kd">var</span> <span class="nx">_begin</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">config_stack</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nx">config</span><span class="p">);</span>
+          <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">};</span>
+        
+        <span class="kd">var</span> <span class="nx">_end</span> <span class="o">=</span> <span class="kd">function</span><span class="p">()</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">app</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">config_stack</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">config_stack</span><span class="p">.</span><span class="nx">pop</span><span class="p">();</span>
+            <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+          <span class="p">}</span>
+          <span class="k">else</span> <span class="p">{</span>
+            <span class="nx">Sammy</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;error, &quot;end&quot; unmatched with &quot;use.&quot;&#39;</span><span class="p">);</span>
+          <span class="p">}</span>
+        <span class="p">};</span>
+        
+        <span class="kd">var</span> <span class="nx">_scope</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">config</span><span class="p">,</span> <span class="nx">fn</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">return</span> <span class="k">this</span>
+            <span class="p">.</span><span class="nx">begin</span><span class="p">(</span><span class="nx">config</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">K</span><span class="p">(</span><span class="nx">fn</span><span class="p">)</span>
+            <span class="p">.</span><span class="nx">end</span><span class="p">()</span>
+            <span class="p">;</span>
+        <span class="p">};</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-60">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-60">#</a>               </div>               <p>Binding an arbitrary function to an error instead of a handler.
+This may get deprecated at some point.</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="kd">var</span> <span class="nx">_error</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span> <span class="nx">handler_fn</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">this</span><span class="p">.</span><span class="nx">bind</span><span class="p">(</span><span class="nx">code</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">event</span><span class="p">,</span> <span class="nx">data</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">handler_fn</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+          <span class="p">})</span>
+          <span class="k">return</span> <span class="k">this</span><span class="p">;</span>
+        <span class="p">};</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-61">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-61">#</a>               </div>               <p>The method for forcibly setting the window location</p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="kd">var</span> <span class="nx">_setInterpolatedLocation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">optional_data</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">optional_data</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nx">path</span> <span class="o">=</span> <span class="nx">sammy_dot_roweis</span><span class="p">.</span><span class="nx">fully_interpolated</span><span class="p">(</span><span class="nx">path</span><span class="p">,</span> <span class="nx">optional_data</span><span class="p">);</span>
+          <span class="p">}</span>
+          <span class="k">if</span> <span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^#/</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">this</span><span class="p">.</span><span class="nx">setLocation</span><span class="p">(</span><span class="nx">path</span><span class="p">);</span>
+          <span class="p">}</span>
+          <span class="k">else</span> <span class="nb">window</span><span class="p">.</span><span class="nx">location</span> <span class="o">=</span> <span class="nx">path</span><span class="p">;</span>
+        <span class="p">};</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-62">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-62">#</a>               </div>               <p><strong>Extend the Application with the convenience methods</strong></p>             </td>             <td class="code">               <div class="highlight"><pre>        <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="nx">app</span><span class="p">,</span> <span class="p">{</span>
+          <span class="nx">display</span><span class="o">:</span> <span class="nx">_display</span><span class="p">,</span>
+          <span class="nx">action</span><span class="o">:</span> <span class="nx">_action</span><span class="p">,</span>
+          <span class="nx">begin</span><span class="o">:</span> <span class="nx">_begin</span><span class="p">,</span>
+          <span class="nx">end</span><span class="o">:</span> <span class="nx">_end</span><span class="p">,</span>
+          <span class="nx">scope</span><span class="o">:</span> <span class="nx">_scope</span><span class="p">,</span>
+          <span class="nx">error</span><span class="o">:</span> <span class="nx">_error</span><span class="p">,</span>
+          <span class="nx">setInterpolatedLocation</span><span class="o">:</span> <span class="nx">_setInterpolatedLocation</span>
+        <span class="p">});</span>
+      
+      <span class="p">};</span>
+  
+    <span class="p">};</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-63">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-63">#</a>               </div>               <p>Place the external interpolation helper function into
+the <code>Sammy.Roweis</code> scope.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="nx">sammy_dot_roweis</span><span class="p">.</span><span class="nx">fully_interpolated</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">_external_interpolate</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">hash_path</span> <span class="o">=</span> <span class="nx">_external_interpolate</span><span class="p">.</span><span class="nx">arguments</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+        <span class="kd">var</span> <span class="nx">data</span> <span class="o">=</span> <span class="p">{};</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span> <span class="nx">i</span> <span class="o">&lt;</span> <span class="nx">_external_interpolate</span><span class="p">.</span><span class="nx">arguments</span><span class="p">.</span><span class="nx">length</span><span class="p">;</span> <span class="o">++</span><span class="nx">i</span><span class="p">)</span> <span class="p">{</span>
+          <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">(</span><span class="kc">true</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">arguments</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+        <span class="p">}</span>
+        <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">hash_path</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/\:[a-zA-Z_]\w*/g</span><span class="p">)</span> <span class="o">||</span> <span class="p">[],</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">parameter</span><span class="p">)</span> <span class="p">{</span>
+          <span class="kd">var</span> <span class="nx">parameter_name</span> <span class="o">=</span> <span class="nx">parameter</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+          <span class="kd">var</span> <span class="nx">parameter_value</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="nx">parameter_name</span><span class="p">];</span>
+          <span class="k">delete</span> <span class="nx">data</span><span class="p">[</span><span class="nx">parameter_name</span><span class="p">];</span>
+          <span class="nx">hash_path</span> <span class="o">=</span> <span class="nx">hash_path</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="nx">parameter</span><span class="p">,</span> <span class="nx">parameter_value</span><span class="p">);</span>
+        <span class="p">});</span>
+        <span class="kd">var</span> <span class="nx">params</span> <span class="o">=</span> <span class="p">[];</span>
+        <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">data</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">parameter_name</span><span class="p">,</span> <span class="nx">parameter_value</span><span class="p">)</span> <span class="p">{</span> 
+          <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;etc&#39;</span> <span class="o">!=</span> <span class="nx">parameter_name</span> <span class="o">&amp;&amp;</span> <span class="nx">data</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">parameter_name</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="nx">parameter_value</span> <span class="o">||</span> <span class="mi">0</span> <span class="o">===</span> <span class="nx">parameter_value</span><span class="p">))</span> <span class="p">{</span>
+            <span class="nx">params</span><span class="p">.</span><span class="nx">push</span><span class="p">(</span><span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nx">parameter_name</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;=&#39;</span> <span class="o">+</span> <span class="nb">encodeURIComponent</span><span class="p">(</span><span class="nx">parameter_value</span><span class="p">));</span>
+          <span class="p">}</span>
+        <span class="p">})</span>
+        <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">compact</span><span class="p">([</span>
+          <span class="nx">hash_path</span><span class="p">,</span>
+          <span class="nx">_</span><span class="p">.</span><span class="nx">compact</span><span class="p">(</span><span class="nx">params</span><span class="p">).</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;&amp;&#39;</span><span class="p">)</span>
+        <span class="p">]).</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;?&#39;</span><span class="p">)</span>
+      <span class="p">};</span>
+      <span class="k">return</span> <span class="nx">_external_interpolate</span><span class="p">;</span>
+    <span class="p">})();</span>
+  
+    <span class="k">return</span> <span class="nx">sammy_dot_roweis</span><span class="p">;</span>
+
+  <span class="p">})();</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-64">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-64">#</a>               </div>               <h2>Readability Helpers</h2>
+
+<p>These helper give you options for making your declarations more readable.</p>             </td>             <td class="code">               <div class="highlight"><pre>  </pre></div>             </td>           </tr>                               <tr id="section-65">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-65">#</a>               </div>               <p>Really simple inflection conversion, allows you to write either <code>get: '/foo/bar'</code> or
+<code>gets: '/foo/bar'</code> when defining handlers.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">function</span> <span class="nx">_present_tense</span> <span class="p">(</span><span class="nx">verb</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="nx">verb</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^get/</span><span class="p">)</span> <span class="o">?</span> <span class="s1">&#39;get&#39;</span> <span class="o">:</span> <span class="p">(</span>
+      <span class="nx">verb</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^post/</span><span class="p">)</span> <span class="o">?</span> <span class="s1">&#39;post&#39;</span> <span class="o">:</span> <span class="p">(</span>
+      <span class="nx">verb</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^put/</span><span class="p">)</span> <span class="o">?</span> <span class="s1">&#39;put&#39;</span> <span class="o">:</span> <span class="p">(</span>
+      <span class="nx">verb</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^del/</span><span class="p">)</span> <span class="o">?</span> <span class="s1">&#39;delete&#39;</span> <span class="o">:</span> <span class="p">(</span><span class="nx">verb</span><span class="p">)</span>
+    <span class="p">)));</span>
+  <span class="p">};</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-66">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-66">#</a>               </div>               <p>The inflections you can use for the various verbs</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">_verb_inflections</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get&#39;</span><span class="p">,</span> <span class="s1">&#39;gets&#39;</span><span class="p">,</span> <span class="s1">&#39;post&#39;</span><span class="p">,</span> <span class="s1">&#39;posts&#39;</span><span class="p">,</span> <span class="s1">&#39;put&#39;</span><span class="p">,</span> <span class="s1">&#39;puts&#39;</span><span class="p">,</span> <span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="s1">&#39;deletes&#39;</span><span class="p">];</span>
+        </pre></div>             </td>           </tr>                               <tr id="section-67">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-67">#</a>               </div>               <p>The <code>.display(...)</code> and <code>.action(...)</code> methods both ultimately work with a hash called <code>config</code>
+that configures a new handler for Sammy. This function provides you with a lot of flexibility when
+declaring the hash. That in turn makes for mroe readable declarations. For example, you could
+write:</p>
+
+<pre><code>.display({ name: 'fu', partial: 'bar' });
+</code></pre>
+
+<p>However, the name doesn't really stand out. That matters, because by convention the name serves as a
+default. So while this is legal, you can also write:</p>
+
+<pre><code>.display('fu', { partial: 'bar' });
+</code></pre>
+
+<p>Placing the name first as its own parameter ames it more obvious. In really simple cases, you can even write:</p>
+
+<pre><code>.display('foo');
+</code></pre>
+
+<p>There are usually default configuration options. These could be mixed in by writing:</p>
+
+<pre><code> .action('bar', $.extend(, some_defaults, { /* my config */ });
+</code></pre>
+
+<p>But again this de-emphasizes the configuration you are writing. So instead, you can write:</p>
+
+<pre><code>.action('bar', { /* my config */ }, some_defaults);
+</code></pre>
+
+<p>Or:</p>
+
+<pre><code>.action({ /* my config */ }, some_defaults);
+</code></pre>
+
+<p>Read on for more of its special cases and logic.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">function</span> <span class="nx">_mix_in_optional_parameters_and_conventions</span> <span class="p">(</span><span class="nx">optional_name</span><span class="p">,</span> <span class="nx">optional_config</span><span class="p">,</span> <span class="nx">defaults</span><span class="p">)</span> <span class="p">{</span>  
+    <span class="cm">/*TODO: Extract to a hash of default behaviours so that we can write our own*/</span>
+    
+    <span class="nx">optional_config</span> <span class="o">=</span> <span class="nx">optional_config</span> <span class="o">||</span> <span class="p">{};</span>
+    <span class="kd">var</span> <span class="nx">config</span><span class="p">;</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-68">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-68">#</a>               </div>               <p>First we deal with the fact that the first two paramaters are optional</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">optional_name</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nx">config</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="nx">defaults</span><span class="p">,</span> <span class="nx">optional_config</span><span class="p">,</span> <span class="p">{</span> <span class="nx">name</span><span class="o">:</span> <span class="nx">optional_name</span> <span class="p">});</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;number&#39;</span> <span class="o">===</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">optional_name</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nx">config</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="nx">defaults</span><span class="p">,</span> <span class="nx">optional_config</span><span class="p">,</span> <span class="p">{</span> <span class="nx">code</span><span class="o">:</span> <span class="nx">optional_name</span><span class="p">,</span> <span class="nx">name</span><span class="o">:</span> <span class="nx">optional_name</span><span class="p">.</span><span class="nx">toString</span><span class="p">()</span> <span class="p">});</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;object&#39;</span> <span class="o">===</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">optional_name</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nx">config</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="nx">defaults</span><span class="p">,</span> <span class="nx">optional_name</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="nx">config</span> <span class="o">=</span> <span class="nx">$</span><span class="p">.</span><span class="nx">extend</span><span class="p">({},</span> <span class="nx">defaults</span><span class="p">,</span> <span class="nx">optional_config</span><span class="p">);</span>
+      </pre></div>             </td>           </tr>                               <tr id="section-69">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-69">#</a>               </div>               <p>The definition of a new handler is driven by the configuration
+parameters you supply. But we value convention over configuration, so
+what follows are a metric fuckload of special cases.</p>             </td>             <td class="code">               <div class="highlight"><pre>    </pre></div>             </td>           </tr>                               <tr id="section-70">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-70">#</a>               </div>               <p>Many conventions rely on each handler having a unique name within the
+application. Roweis doesn't enforce that names be unique, but it does
+take a shot at guessing the name if you don't supply one.</p>
+
+<p><code>.gets</code>, <code>.posts</code> and so on are all declarations that the <code>fetch_data</code>
+goes to a server for some <code>data</code>. The first rule is that if you don't supply
+a name and you do supply a server path, the name of the handler will be the
+server path.</p>
+
+<p>Nota bene: remember that <code>_mix_in_optional_parameters_and_conventions</code> lets you write either
+<code>.action('doSomething', { ... })</code> or <code>.action({ name: 'doSomething', ... })</code> as
+you prefer.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">name</span><span class="p">))</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">verb</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">detect</span><span class="p">(</span><span class="nx">_verb_inflections</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">v</span><span class="p">)</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">config</span><span class="p">[</span><span class="nx">v</span><span class="p">]);</span> <span class="p">});</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">verb</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">config</span><span class="p">.</span><span class="nx">name</span> <span class="o">=</span> <span class="nx">config</span><span class="p">[</span><span class="nx">verb</span><span class="p">];</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-71">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-71">#</a>               </div>               <p><code>config.route</code> is the route used by Sammy to trigger the application. If you don't 
+supply a route, Roweis guess it as the name. Some additional massaging below takes
+care of the hash and root path, so if you write <code>.display('bravado')</code>, you are getting
+a route of <code>#bravado</code> by convention.</p>
+
+<p>Also note that we very deliberately test for whether you have defined a route, not
+for truthiness. Under certain circumstances you may wish to have a handler that
+cannot be triggered with a location. When that is the case, you can write
+<code>.display('stealth', { route: false, ... })</code> and no route will be configured
+by convention.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">route</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">config</span><span class="p">.</span><span class="nx">name</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">config</span><span class="p">.</span><span class="nx">route</span> <span class="o">=</span> <span class="nx">config</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="p">}</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-72">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-72">#</a>               </div>               <p><code>config.partial</code> is the partial path to a partial used by Sammy to display <code>data</code>. 
+If you don't supply it, Roweis guess it as the name. Some additional massaging below takes
+care of a root path and default suffix using scopes and application defaults, path, so 
+if you write <code>.display('bravado')</code>, you could be getting a partial of 
+<code>/partials/bravado.haml</code> by convention.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">partial</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nx">config</span><span class="p">.</span><span class="nx">partial</span> <span class="o">=</span> <span class="nx">config</span><span class="p">.</span><span class="nx">name</span><span class="p">;</span>
+    <span class="p">}</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-73">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-73">#</a>               </div>               <p>next we deal with certain conventions. One is that if there is a config
+parameter called <code>foo</code>, then the parameter <code>foo_home_path</code> has special
+signifcance: the value for <code>foo</code> is actually <code>config.foo_home_path + config.foo</code>.</p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">prop</span> <span class="k">in</span> <span class="nx">config</span><span class="p">)</span> <span class="p">{</span>
+      <span class="cm">/*TODO: Mix in `foo_suffix`*/</span>
+      
+      <span class="kd">var</span> <span class="nx">val</span> <span class="o">=</span> <span class="nx">config</span><span class="p">[</span><span class="nx">prop</span><span class="p">];</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">prop</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">val</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">prop</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/_home_path$/</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">config</span><span class="p">[</span><span class="nx">prop</span><span class="o">+</span><span class="s1">&#39;_home_path&#39;</span><span class="p">])</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">val</span><span class="p">))</span> <span class="p">{</span>
+          <span class="nx">config</span><span class="p">[</span><span class="nx">prop</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nx">config</span><span class="p">[</span><span class="nx">prop</span><span class="o">+</span><span class="s1">&#39;_home_path&#39;</span><span class="p">],</span> <span class="nx">val</span><span class="p">].</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="s1">&#39;object&#39;</span> <span class="o">===</span> <span class="k">typeof</span><span class="p">(</span><span class="nx">val</span><span class="p">))</span> <span class="p">{</span>
+          <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">inner_prop</span> <span class="k">in</span> <span class="nx">val</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">val</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">inner_prop</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">val</span><span class="p">[</span><span class="nx">inner_prop</span><span class="p">]))</span> <span class="p">{</span>
+              <span class="nx">val</span><span class="p">[</span><span class="nx">inner_prop</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="nx">config</span><span class="p">[</span><span class="nx">prop</span><span class="o">+</span><span class="s1">&#39;_home_path&#39;</span><span class="p">],</span> <span class="nx">val</span><span class="p">[</span><span class="nx">inner_prop</span><span class="p">]].</span><span class="nx">join</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">);</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    </pre></div>             </td>           </tr>                               <tr id="section-74">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-74">#</a>               </div>               <p>Finally, a special case that routes should start with <code>#/</code></p>             </td>             <td class="code">               <div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">config</span><span class="p">.</span><span class="nx">route</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">config</span><span class="p">.</span><span class="nx">route</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^#\//</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nx">config</span><span class="p">.</span><span class="nx">route</span> <span class="o">=</span> <span class="s1">&#39;#/&#39;</span> <span class="o">+</span> <span class="nx">config</span><span class="p">.</span><span class="nx">route</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="k">return</span> <span class="nx">config</span><span class="p">;</span>
+  <span class="p">};</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-75">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-75">#</a>               </div>               <p>This is the interpolation function used to interpret paths whenever a path is used in a
+Roweis declaration. This allows you to write things like:</p>
+
+<pre><code>.display('bar', {
+  partial: '/blitz'
+});
+</code></pre>
+
+<p>Or:</p>
+
+<pre><code>.display('bar', {
+  gets: '/customers/:id'
+});
+</code></pre>
+
+<p>Or:</p>
+
+<pre><code>.display('roulette', {
+  partial: function (context, data) { 
+    return (data.partipants.is_gigantic() ? '/biggie' : '/smalls');
+  }
+});
+</code></pre>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">_internal_interpolate</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">fn_or_path</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">optional_data</span><span class="p">)</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">fn</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isString</span><span class="p">(</span><span class="nx">fn_or_path</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">fn_or_path</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/^(#|\/)/</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nx">fn</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="nx">fn_or_path</span><span class="p">;</span> <span class="p">};</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">fn_or_path</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nx">fn</span> <span class="o">=</span> <span class="nx">fn_or_path</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">fn_or_path</span><span class="p">.</span><span class="nx">toFunction</span><span class="p">))</span> <span class="p">{</span>
+      <span class="nx">fn</span> <span class="o">=</span> <span class="nx">fn_or_path</span><span class="p">.</span><span class="nx">toFunction</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="kd">var</span> <span class="nx">path</span> <span class="o">=</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">call</span><span class="p">(</span><span class="k">this</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">optional_data</span><span class="p">);</span>
+    <span class="kd">var</span> <span class="nx">transformed_path</span> <span class="o">=</span> <span class="nx">path</span><span class="p">;</span>
+    <span class="cm">/* TODO: replace with a fold */</span>
+    <span class="nx">$</span><span class="p">.</span><span class="nx">each</span><span class="p">(</span><span class="nx">path</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="sr">/\:[a-zA-Z_]\w*/g</span><span class="p">)</span> <span class="o">||</span> <span class="p">[],</span> <span class="kd">function</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span> <span class="nx">parameter</span><span class="p">)</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">parameter_name</span> <span class="o">=</span> <span class="nx">parameter</span><span class="p">.</span><span class="nx">substring</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+      <span class="kd">var</span> <span class="nx">parameter_value</span> <span class="o">=</span> <span class="nx">data</span><span class="p">[</span><span class="nx">parameter_name</span><span class="p">]</span> <span class="o">||</span> <span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">params</span> <span class="o">&amp;&amp;</span> <span class="nx">data</span><span class="p">.</span><span class="nx">params</span><span class="p">[</span><span class="nx">parameter_name</span><span class="p">])</span><span class="o">||</span> <span class="p">(</span><span class="nx">data</span><span class="p">.</span><span class="nx">server_data</span> <span class="o">&amp;&amp;</span> <span class="nx">data</span><span class="p">.</span><span class="nx">server_data</span><span class="p">[</span><span class="nx">parameter_name</span><span class="p">]);;</span>
+      <span class="nx">transformed_path</span> <span class="o">=</span> <span class="nx">transformed_path</span><span class="p">.</span><span class="nx">replace</span><span class="p">(</span><span class="nx">parameter</span><span class="p">,</span> <span class="nx">parameter_value</span><span class="p">);</span>
+    <span class="p">});</span>
+    <span class="k">return</span> <span class="nx">transformed_path</span><span class="p">;</span>
+  <span class="p">};</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-76">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-76">#</a>               </div>               <p>This function works very much like <code>$.extend(true, ...)</code>. It was written for the worst
+of all possible reasons, because I didn't know you could pass <code>true</code> to <code>$.extend(...)</code>
+to perform a recursive extension.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">_meld</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="cm">/* TODO: Rewrite _meld to use $.extend, weaning client code off its idiosyncrasies*/</span>
+    
+    <span class="kd">var</span> <span class="nx">recursor</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+      <span class="kd">var</span> <span class="nx">args</span> <span class="o">=</span> <span class="nx">_</span><span class="p">.</span><span class="nx">compact</span><span class="p">(</span><span class="nx">arguments</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">args</span><span class="p">.</span><span class="nx">length</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">args</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">every</span><span class="p">(</span><span class="nx">args</span><span class="p">,</span> <span class="s2">&quot;typeof(_) === &#39;array&#39;&quot;</span><span class="p">.</span><span class="nx">lambda</span><span class="p">()))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">foldl</span><span class="p">(</span><span class="nx">args</span><span class="p">,</span> <span class="s2">&quot;x.concat(y)&quot;</span><span class="p">.</span><span class="nx">lambda</span><span class="p">(),</span> <span class="p">[]);</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">some</span><span class="p">(</span><span class="nx">args</span><span class="p">,</span> <span class="s2">&quot;typeof(_) !== &#39;object&#39;&quot;</span><span class="p">.</span><span class="nx">lambda</span><span class="p">()))</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nx">args</span><span class="p">[</span><span class="nx">args</span><span class="p">.</span><span class="nx">length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">];</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">return</span> <span class="nx">_</span><span class="p">.</span><span class="nx">foldl</span><span class="p">(</span><span class="nx">args</span><span class="p">,</span>
+        <span class="kd">function</span> <span class="p">(</span><span class="nx">extended</span><span class="p">,</span> <span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+          <span class="k">for</span> <span class="p">(</span><span class="kd">var</span> <span class="nx">i</span> <span class="k">in</span> <span class="nx">obj</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nx">obj</span><span class="p">.</span><span class="nx">hasOwnProperty</span><span class="p">(</span><span class="nx">i</span><span class="p">))</span> <span class="p">{</span>
+              <span class="nx">extended</span><span class="p">[</span><span class="nx">i</span><span class="p">]</span> <span class="o">=</span> <span class="nx">recursor</span><span class="p">(</span><span class="nx">extended</span><span class="p">[</span><span class="nx">i</span><span class="p">],</span> <span class="nx">obj</span><span class="p">[</span><span class="nx">i</span><span class="p">]);</span>
+            <span class="p">}</span>
+          <span class="p">}</span>
+          <span class="k">return</span> <span class="nx">extended</span><span class="p">;</span>
+        <span class="p">},</span> 
+        <span class="p">{}</span>
+      <span class="p">);</span>
+    <span class="p">};</span>
+    <span class="k">return</span> <span class="nx">recursor</span><span class="p">;</span>
+  <span class="p">})();</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-77">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-77">#</a>               </div>               <p><strong>Continuation Passing Style</strong></p>
+
+<p>We've fallen into Javascript's ghastly habit of reinventing <a href="http://marijnhaverbeke.nl/cps/">CPS</a>.</p>
+
+<p>Roweis chains functions together using CPS. There are lots of places where
+functions are chained together. The most obvious is the four "handler steps" described below: Each
+step is chained using CPS. This allows Roweis to do sensible things when doing something asynchronously.</p>
+
+<p>You may not expect something to be asynchronous, but to take two common examples, any call to a server
+is AJAX, and therefore asynchronous by default. That includes any rendering of a partial, since the
+partial may need to be fetched from the server using AJAX.</p>             </td>             <td class="code">               <div class="highlight"><pre>  </pre></div>             </td>           </tr>                               <tr id="section-78">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-78">#</a>               </div>               <p>a handy noop function, the equivalent of I in CPS</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">_noop</span> <span class="o">=</span> <span class="p">(</span><span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+    <span class="kd">var</span> <span class="nx">noop</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+    <span class="p">};</span>
+    <span class="nx">noop</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">=</span> <span class="p">{</span><span class="nx">is_noop</span><span class="o">:</span> <span class="kc">true</span><span class="p">};</span>
+    <span class="k">return</span> <span class="nx">noop</span><span class="p">;</span>
+  <span class="p">})();</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-79">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-79">#</a>               </div>               <p>and the test for noop</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">_is_noop</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">fn</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isFunction</span><span class="p">(</span><span class="nx">fn</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">roweis</span> <span class="o">&amp;&amp;</span> <span class="nx">fn</span><span class="p">.</span><span class="nx">roweis</span><span class="p">.</span><span class="nx">is_noop</span><span class="p">);</span>
+  <span class="p">}</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-80">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-80">#</a>               </div>               <p>Roweis works with functions that have the signature <code>function (context, data, callback)</code>.
+<code>_callbackable</code> allows you to write any of the following and have it be converted accordingly.</p>
+
+<pre><code>function () { ... }
+function (data) { ... }
+function (context, data) { ... }
+function (context, data, callback) { ... }
+</code></pre>
+
+<p>One wrinkle is that if you supply either of the first three forms, and your function returns a value, that is what is passed
+as data to the callback. Otherwise, it passes the same data to the callback.</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">_callbackable</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">handler</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span><span class="nx">isUndefined</span><span class="p">(</span><span class="nx">handler</span><span class="p">)</span> <span class="o">||</span> <span class="nx">_is_noop</span><span class="p">(</span><span class="nx">handler</span><span class="p">))</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">_noop</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">handler</span><span class="p">.</span><span class="nx">length</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">handler</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="mi">2</span> <span class="o">===</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">new_data</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">new_data</span> <span class="o">||</span> <span class="nx">data</span><span class="p">);</span>
+      <span class="p">};</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="mi">1</span> <span class="o">===</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kd">var</span> <span class="nx">new_data</span> <span class="o">=</span> <span class="nx">handler</span><span class="p">(</span><span class="nx">data</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">new_data</span> <span class="o">||</span> <span class="nx">data</span><span class="p">);</span>
+      <span class="p">};</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">===</span> <span class="nx">handler</span><span class="p">.</span><span class="nx">length</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">handler</span><span class="p">();</span>
+        <span class="k">return</span> <span class="nx">callback</span><span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">);</span>
+      <span class="p">};</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+  </pre></div>             </td>           </tr>                               <tr id="section-81">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-81">#</a>               </div>               <p>Composes two functions through CPS, converting them into _callbackables
+in the process</p>             </td>             <td class="code">               <div class="highlight"><pre>  <span class="kd">var</span> <span class="nx">_compose</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">x</span><span class="p">,</span> <span class="nx">y</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span> <span class="nx">isUndefined</span><span class="p">(</span><span class="nx">y</span><span class="p">)</span> <span class="o">||</span> <span class="nx">y</span><span class="p">.</span><span class="nx">is_noop</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">_callbackable</span><span class="p">(</span><span class="nx">x</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nx">_</span><span class="p">.</span> <span class="nx">isUndefined</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="o">||</span> <span class="nx">x</span><span class="p">.</span><span class="nx">is_noop</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="nx">_callbackable</span><span class="p">(</span><span class="nx">y</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">return</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="nx">callback</span><span class="p">)</span> <span class="p">{</span>
+      <span class="nx">_callbackable</span><span class="p">(</span><span class="nx">x</span><span class="p">)(</span><span class="nx">context</span><span class="p">,</span> <span class="nx">data</span><span class="p">,</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">context2</span><span class="p">,</span> <span class="nx">data2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nx">_callbackable</span><span class="p">(</span><span class="nx">y</span><span class="p">)(</span><span class="nx">context2</span><span class="p">,</span> <span class="nx">data2</span><span class="p">,</span> <span class="nx">callback</span><span class="p">);</span>
+      <span class="p">})</span>
+    <span class="p">};</span>
+  <span class="p">};</span>
+
+<span class="p">})(</span><span class="nx">jQuery</span><span class="p">);</span></pre></div>             </td>           </tr>                               <tr id="section-82">             <td class="docs">               <div class="octowrap">                 <a class="octothorpe" href="#section-82">#</a>               </div>               <p><strong>License Terms</strong></p>             </td>             <td class="code">               <div class="highlight"><pre><span class="cm">/*</span>
+<span class="cm">The MIT License</span>
+
+<span class="cm">Copyright (c) 2010 Reginald Braithwaite and Unspace Interactive</span>
+
+<span class="cm">http://reginald.braythwayt.com</span>
+<span class="cm">http://unspace.ca</span>
+
+<span class="cm">Permission is hereby granted, free of charge, to any person obtaining a copy</span>
+<span class="cm">of this software and associated documentation files (the &quot;Software&quot;), to deal</span>
+<span class="cm">in the Software without restriction, including without limitation the rights</span>
+<span class="cm">to use, copy, modify, merge, publish, distribute, sublicense, and/or sell</span>
+<span class="cm">copies of the Software, and to permit persons to whom the Software is</span>
+<span class="cm">furnished to do so, subject to the following conditions:</span>
+
+<span class="cm">The above copyright notice and this permission notice shall be included in</span>
+<span class="cm">all copies or substantial portions of the Software.</span>
+
+<span class="cm">THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR</span>
+<span class="cm">IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,</span>
+<span class="cm">FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE</span>
+<span class="cm">AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER</span>
+<span class="cm">LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,</span>
+<span class="cm">OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN</span>
+<span class="cm">THE SOFTWARE.</span>
+<span class="cm">*/</span>
+
+</pre></div>             </td>           </tr>                </tbody>     </table>   </div> </body> </html> 
