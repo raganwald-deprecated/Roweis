@@ -3,27 +3,29 @@ Roweis
 
 *Use convention over configuration to implement your views and controllers in the browser*.
 
-Roweis is a Javascript framework. You use Roweis to build [Single Page Interface][spi] applications that are factored into *Views* for displaying information, and *Controllers* for changing information. Roweis makes this easy by supporting minimal configuration. You can write things like:
+**Roweis** is a [Sammy](http://code.quirkey.com/sammy/index.html) plugin for building [Single Page Interface](http://itsnat.sourceforge.net/php/spim/spi_manifesto_en.php) applications in a highly declarative manner using convention over configuration.
 
-    .view('welcome')
+Roweis is not a framework: Roweis does not provide an "abstraction" that happens to be implemented using Sammy. Instead, Roweis provides helper methods that build Sammy route and event handlers for you.
 
-Or:
+The simplest case is a function that handles accessing a particular hash location. In Sammy, you would write a function to handle the root hash like this:
 
-    .view('products', {
-      gets: { 
-        product_list: '/products',
-        recent_activity: '/products/activities'
-      }
-    })
+    this.get('#/', function(context) {
+      ...
+    });
+    
+In Roweis, you would declare a handler for the root hash location using a configuration hash, like this:
 
-Or:
+    app.display({
+      route: '/',
+      ...
+    });
+    
+The discussion below will explain what else would be declared in the hash, and why. The main thing is that Roweis does most of its work with a hash of configuration options rather than the body of a function. Roweis then makes the function for you, and behind the scenese it binds the function to a faux-route using `.get('#/', ...)` on your behalf.
 
-    .controller('logout', {
-      posts: '/authentication/logout'
-      redirects_to: '#/'
-    })
+Roweis is a mildly opinionated library: Roweis is designed to help you build and maintain a certain type of client-side application. That does not mean that other types of applications are undesirable, just that this is what Roweis does. The two reasons that Roweis is a library and not a framewok are:
 
-And Roweis does the rest, linking your definitions with HTML templates (like Haml files) and AJAX calls to a server or servers that implement your model logic.
+1. Roweis does not seek to teach you a non-portable abstraction to replace portable concepts like URLs and hashes. Therefore, Roweis writes functions that happily live in Sammy's abstraction.
+2. Roweis seeks to make simple things easy and complex things possible. Therefore, when you need to do something outside of Roweis's sweet spot, you can work directly with Javascript, you can write a Sammy handler directly, you can write a customized backbone view, you are not limited to working within Roweis.
 
 **where are the models?**
 
@@ -214,7 +216,7 @@ We also write an `application.js` file for Sammy, but this time we tell it to us
 Sammy applications associate routes with functions we call "handlers." Roweis is simply a tool for generating some or even all of those handlers for you and then registering them with Sammy. In the simplest case, we can use Roweis to register a handler function with Sammy from outside of our `application.js` file:
 
     Sammy.Roweis.example // note the name of the application
-      .view('welcome', // the name of the handler, must be unique
+      .display('welcome', // the name of the handler, must be unique
         function () {
           this.partial('welcome.haml', {}, function (html) { app.swap(html); });
         });
@@ -230,19 +232,19 @@ Everything Roweis defines for you is a handler. By convention, a handler that is
 Notice that Roweis also does a little "Convention over Configuration:" if a controller is called `welcome`, the default route for it is `#/welcome`, and we don't have to define that separately. And Roweis can go further. If you have a view with the same name as a partial, why repeat yourself?
 
     Sammy.Roweis.example
-      .view('welcome');
+      .display('welcome');
     
-By default, Roweis's `.view` method creates a handler responds to `GET` and then invokes the Haml view of the same name for you. It also has a default route of `#/welcome`. You can define some more options. For example, you can use a different route:
+By default, Roweis's `.display` method creates a handler responds to `GET` and then invokes the Haml view of the same name for you. It also has a default route of `#/welcome`. You can define some more options. For example, you can use a different route:
 
     Sammy.Roweis.example
-      .view('welcome', { 
+      .display('welcome', { 
         route: '#/' 
       });
       
 You can also use the Rails/Sinatra/Sammy convention of extracting parameters from the route:
 
     Sammy.Roweis.example
-      .view('product', { 
+      .display('product', { 
         route: '#/product/:id' 
       });
     
@@ -251,30 +253,30 @@ You can also use the Rails/Sinatra/Sammy convention of extracting parameters fro
 We just saw how you associate a handler with its own partial in Roweis: You give it the same name and Roweis takes care of the rest. Let's look at shared views. Let's assume that we run a [Skateboard and BMX Shop][core]. We have two different routes, `#/skateboard`, and `#bmx`. If they each had their own partials, we would write a `skateboard.haml` partial and a `bmx.haml` partial. Then we'd write our handlers:
 
     Sammy.Roweis.example
-      .view('skateboard')
-      .view('bmx');
+      .display('skateboard')
+      .display('bmx');
     
 If we want both handlers to share a public `product.haml` partial, we simply say so:
 
     Sammy.Roweis.example
-      .view('skateboard', { partial: 'product' })
-      .view('bmx',        { partial: 'product' });
+      .display('skateboard', { partial: 'product' })
+      .display('bmx',        { partial: 'product' });
     
 Of course, many times we don't need to share a partial, so Sammy is set up to make you do as little work as possible. I personally prefer that if a partial is shared, it gets its own unique name. But that's a matter of taste. If you want, you can write:
 
     Sammy.Roweis.example
-      .view('skateboard', { partial: 'bmx' })
-      .view('bmx);
+      .display('skateboard', { partial: 'bmx' })
+      .display('bmx);
     );
     
 Both handlers will use `bmx.haml` as their partial.
 
 **retrieving something**
 
-Some views really are as simple as displaying a template. When that's all you need, writing `.view('show_me')` is all you need to do. But some views need to go and get some restful data from a server that speaks JSON. Roweis makes that easy:
+Some views really are as simple as displaying a template. When that's all you need, writing `.display('show_me')` is all you need to do. But some views need to go and get some restful data from a server that speaks JSON. Roweis makes that easy:
 
     Sammy.Roweis.example
-      .view('product', { 
+      .display('product', { 
         gets: 'http://someserver.com/products/:_id',
         route: '#/product/:id
       })
@@ -283,25 +285,25 @@ This view expects an `id` parameter embedded in its route and in turn it uses AJ
 
 **controllers**
 
-In Roweis parlance, a view presents something but doesn't modify anything. A controller modifies something. Controllers usually redirect to a view, which [solves certain problems with bookmarking and the back button][prg]. You define controllers with the method `.controller`. By default, a controller defines a handler that responds to `POST` instead of `GET`:
+In Roweis parlance, a view presents something but doesn't modify anything. A controller modifies something. Controllers usually redirect to a view, which [solves certain problems with bookmarking and the back button][prg]. You define controllers with the method `.action`. By default, a controller defines a handler that responds to `POST` instead of `GET`:
 
     Sammy.Roweis.example
-      .controller('new_skateboard', { redirects_to: 'show_product' })
-      .controller('new_bmx',        { redirects_to: 'show_product' })
-      .view('show_product');
+      .action('new_skateboard', { redirects_to: 'show_product' })
+      .action('new_bmx',        { redirects_to: 'show_product' })
+      .display('show_product');
       
 Like a view, a controller can also interact with a remote server. Here's a complete example:
 
     Sammy.Roweis.example
     
-      .view('design_your_own_skateboard'),
+      .display('design_your_own_skateboard'),
       
-      .controller('new_skateboard', {
+      .action('new_skateboard', {
         posts: 'http://someserver.com/skateboards',
         redirects_to: 'rad_product/:id' 
       })
       
-      .view('rad_product' {
+      .display('rad_product' {
         route: '#/rad/:id',
         gets: 'http://someserver.com/products/:_id'
       });
@@ -313,7 +315,7 @@ In this sequence, `design_your_own_skateboard.haml` would contain a form that ex
 When you want to nest views, Roweis gives you a simple mechanism, "unobtrusive views." An unobtrusive view has a route of `false` to indicate that it cannot be accessed through an URL and it also defines a jQuery selector called `renders`: 
 
     Sammy.Roweis.example.
-      .view('calendar', { 
+      .display('calendar', { 
         route: false,
         renders: '.calendar.placeholder' ,
         gets: 'http://someserver.com/calendar/events'
